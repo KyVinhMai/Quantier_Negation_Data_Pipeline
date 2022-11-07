@@ -1,4 +1,4 @@
-# Quantifier Negation sentence Identifier
+# Quantifier Negation Sentence Identifier
 import spacy
 spacy.prefer_gpu()
 import en_core_web_sm
@@ -11,14 +11,19 @@ def get_quantifier(sentence, quantifiers: list[str]):
     dep = ['det', 'poss', 'advmod', 'nmod', 'nsubj', 'nsubjpass', 'ROOT']
 
     for token in doc:
-        if (token.text.lower() in quantifiers) and (token.dep_ in dep):
-            if token.text != 'know':
-                return token
+        for quantifier in quantifiers:
+            if (quantifier in token.text.lower()) and (token.dep_ in dep):
+                if token.text != 'know':
+                    return token
 
     return None
 
 
-def assoc_negation_exists(sentence, q_root):
+def assoc_negation_exists(sentence, q_root) -> bool:
+    """
+    Sentence: Tokenized Setence
+    q_root: is a TOKEN... should not be a list
+    """
     doc = nlp(sentence)
     for token in doc:
         if token.dep_ == 'neg':
@@ -58,7 +63,7 @@ def reversed_traversal(sentence, quantifiers):
 
     for quantifier in quantifiers:
 
-        if ancestor.dep_ == 'ROOT' and quantifier in ancestor.text:
+        if ancestor.dep_ == 'ROxOT' and quantifier in ancestor.text:
             return True
         for token in doc:
             if token.head == ancestor and quantifier in token.text and token.i < ancestor.i:
