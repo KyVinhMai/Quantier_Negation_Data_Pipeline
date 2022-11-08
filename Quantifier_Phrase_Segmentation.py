@@ -1,8 +1,6 @@
 import spacy
+from spacy.matcher import Matcher, DependencyMatcher
 spacy.prefer_gpu()
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from argparse import doc, token
 import en_core_web_sm
 nlp = en_core_web_sm.load()
 
@@ -16,17 +14,20 @@ def is_quantifier_word(token, quantifier):
     if token.text.lower() == quantifier.text + "one":
         return token
 
+    if token.text.lower() == quantifier.text + "where":
+        return token
+
     return None
 
 def is_quantifier_noun(word, sentence):
     """
     Detects if the quantifier is being applied to a noun.
     """
-    index = 0
-    for token in sentence:
-        if word.text == token.text: #Can't find a better way to find the index
-            index = token.i
+    matcher = Matcher(nlp.vocab)
+    pattern = [{"LOWER": word.text}]
+    matcher.add("Word_index", [pattern]) # Use matcher to find the index
 
+    _, index, _ = matcher(sentence)[0]
     word_neighbor = sentence[index].nbor()
 
     #check for conjunctions
@@ -50,18 +51,30 @@ def is_quantifier_noun(word, sentence):
                 if token.dep_ == "nsubj" or token.dep_ == "nsubjpass":
                     return sentence[index: token.i + 1]
 
-def is_quantifier_phrase(token, quantifier, sentence):
-    adposition_word = nlp("of")[0]
+def is_quantifier_phrase(quantifier, sentence):
+    """
+    quantifier: token
+    sentence: doc object
 
+    Final check to validate if it is a quantifier.
+    We're assuming now that the phrase takes the form of:
+
+                            '[quantifier] of them...'
+
+                Where quantifier = {Every one, Any, Some, etc.}
+
+    And there is an adpositive word, 'of', referring to the pronoun.
+    """
     for token in sentence:
-        if token.text == adposition_word.text and token.pos_ == "adv":
+        if token.text.lower() == "of" and token.pos_ == "ADP":
 
-            if token.dep == "Prep" and token.children.dep_ == "pobj"\
-                    and (token.children.pos_ == "PRON" or token.children.pos_ == "NOUN"):
+            if token.dep_ == "prep" and "pobj" in [child.dep_ for child in token.children]:
 
                 "Checks if the quantifier is to the left of the adposition_word"
-                if quantifier.text in [word for word in token.lefts]: #Fix
-                    pass
+                if quantifier.text in sentence[:token.i].text:#todo make more efficient
+                    for term in sentence:
+                        if term.dep_ == 'pobj' and term.pos_ == ("NOUN" or "PRON"):
+                            return sentence[token.i - 2: term.i + 1]
 
 
 def find_quantifier_category(token, quantifier, sentence):
@@ -71,10 +84,11 @@ def find_quantifier_category(token, quantifier, sentence):
     > Quantifier Noun = Every {Parent, Dog, Cowboy}
     > Quantifier Phrase = Every one of them
     """
+    #todo reject first round if second word is adverb? ... Every now and then
 
     if is_quantifier_word(token, quantifier):
         return token
 
-sentence = nlp("Any Tomahawk missile does not hit-")
-word = nlp("any")[0]
-print(is_quantifier_noun(word, sentence))
+sentence = nlp("every one of these organizations who have endorsed you did not agree with everything you did or every word you've spoken")
+word = nlp("every")[0]
+print(is_quantifier_phrase(word, sentence))

@@ -2,15 +2,17 @@
 import spacy
 spacy.prefer_gpu()
 import en_core_web_sm
-from typing import TYPE_CHECKING
 import Quantifier_Phrase_Segmentation as qsp
-if TYPE_CHECKING:
-    from argparse import doc, token
 nlp = en_core_web_sm.load()
 print('INFO: spaCy initialized successfully.')
 
 
-def get_quantifier(sentence: doc, quantifiers: list[str]) -> token or None:
+def get_quantifier(sentence, quantifiers: list[str]):
+    """
+    sentence: Doc
+    quantifiers: List of quantifiers
+    returns: quantifier token
+    """
     doc = nlp(sentence)
 
     for token in doc:
@@ -20,7 +22,12 @@ def get_quantifier(sentence: doc, quantifiers: list[str]) -> token or None:
 
     return None
 
-def assoc_negation_exists(sentence: doc, q_root: token) -> bool:
+def assoc_negation_exists(sentence, q_root) -> bool:
+    """
+    sentence: doc object
+    q_root: token
+    returns: bool
+    """
     doc = nlp(sentence)
     for token in doc:
         if token.dep_ == 'neg':
@@ -45,7 +52,10 @@ def get_q_root(quantifier):
         return q_head.head
 
 
-def reversed_traversal(sentence: doc, quantifiers):
+def reversed_traversal(sentence, quantifiers):
+    """
+    sentence: doc object
+    """
     doc = nlp(sentence)
     negation = None
     for token in doc:
