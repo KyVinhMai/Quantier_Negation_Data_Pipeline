@@ -2,7 +2,7 @@
 import spacy
 spacy.prefer_gpu()
 import en_core_web_sm
-import Quantifier_Phrase_Segmentation as qsp
+import Quantifier_Phrase_Segmentation as qps
 nlp = en_core_web_sm.load()
 print('INFO: spaCy initialized successfully.')
 
@@ -18,7 +18,8 @@ def get_quantifier(sentence, quantifiers: list[str]):
     for token in doc:
         for quantifier in quantifiers:
             if quantifier in token.text.lower():
-                return qsp.find_quantifier_category(token, quantifier, sentence)
+                if qps.find_quantifier_category(token, quantifier, sentence):
+                    return quantifier
 
     return None
 
@@ -116,7 +117,7 @@ def find_quantifier_negation(sentences, quantifiers):
     indices = []
     for sentence in sentences:
         if is_quantifier_negation(sentence, quantifiers):
-            quants.append(get_quantifier(sentence, quantifiers).text) #todo change into quantifier category
+            quants.append(qps.find_quantifier_category(sentence, quantifiers)) #todo change into quantifier category
             sents.append(sentence)
             indices.append(i)
             # standalone.append("True" if is_standalone(sentence, quantifiers) else "False")

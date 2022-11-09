@@ -19,4 +19,5 @@ for file in directory_path.iterdir():
             quantifier_data_files[file.stem] = sentences
 
 
-print(quantifier_data_files["extracted_every_quantifier"])
+def test_Quantifier_Phrase_Segmentation(unittest.TestCase):
+    pass

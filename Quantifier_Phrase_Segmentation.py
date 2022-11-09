@@ -89,6 +89,8 @@ def find_quantifier_category(token, quantifier, sentence):
     if is_quantifier_word(token, quantifier):
         return token
 
+    return is_quantifier_noun(token, sentence) if not None else is_quantifier_phrase(quantifier, sentence)
+
 sentence = nlp("every one of these organizations who have endorsed you did not agree with everything you did or every word you've spoken")
 word = nlp("every")[0]
 print(is_quantifier_phrase(word, sentence))
