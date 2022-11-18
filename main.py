@@ -17,20 +17,8 @@ quant_count = {
 
 found_sentences = []
 
-quantifiers = ['every', 'some']
+quantifiers = ['every', 'some', "any", "no"]
 
-
-presentation_stats = f"""
-Found Quantifiers
---------------------------------------------------
-Every Counts: {quant_count['every']}
-Some Counts: {quant_count['some']}
-
-All sentences = {len(found_sentences)}
---------------------------------------------------
-In total, parsed through {clauses} clauses!
-
-"""
 
 
 hub_url = "https://www.npr.org/programs/all-things-considered/archive?date=12-31-2021"
@@ -47,9 +35,9 @@ def validate_quant_neg(article_url: str) -> None:
     try:
         sentences = npr.extract_transcript(soup)
 
-        if qn.validate_quant_neg(sentences, quantifiers): #todo Really inefficient
-            quants, matches, indices = qn.find_quantifier_negation(sentences, quantifiers)
-            #todo context = qn.get_context(sentences, indices)
+        quants, matches, indices = qn.find_quantifier_negation(sentences, quantifiers)
+        if matches:
+            context = qn.get_context(sentences, indices)
             #todo grab audiofile
             title, date = npr.extract_metadata(soup)
             print(f"Found an Article '{title}' with {quants}")
@@ -60,12 +48,14 @@ def validate_quant_neg(article_url: str) -> None:
                     if quant in quants[i]:
                         quant_count[quant] += 1
 
-                found_sentences.append([ID, title, quants[i], matches[i], "context", "Ratatouie", date, article_url])
+                found_sentences.append([ID, title, quants[i], matches[i], context, "Ratatouie", date, article_url])
                 ID += 1
 
         clauses += count_clauses(sentences)
 
+    #Custom except for finding no quantifier negations
     except AttributeError:
+        print('Issue with')
         print("ARTICLE URL")
         print(article_url)
 
@@ -114,9 +104,20 @@ def crawl_NPR_archives():
     except:
         print("Shit whoops")
 
+    presentation_stats = f"""
+        Found Quantifiers
+        --------------------------------------------------
+        Every Counts: {quant_count['every']}
+        Some Counts: {quant_count['some']}
+
+        All sentences = {len(found_sentences)}
+        --------------------------------------------------
+        In total, parsed through {clauses} clauses!
+
+        """
+
     print(presentation_stats)
     print("Webcrawler Complete!")
-
 
 if __name__ == "__main__":
     crawl_NPR_archives()

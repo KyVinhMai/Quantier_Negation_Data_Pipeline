@@ -1,5 +1,6 @@
 # Quantifier Negation Sentence Identifier
 import spacy
+from spacy.matcher import  DependencyMatcher
 spacy.prefer_gpu()
 import en_core_web_sm
 import Quantifier_Phrase_Segmentation as qps
@@ -7,7 +8,7 @@ nlp = en_core_web_sm.load()
 print('INFO: spaCy initialized successfully.')
 
 
-def get_quantifier(sentence, quantifiers: list[str]):
+def get_quantifier(sentence: str, quantifiers: list[str]):
     """
     sentence: Doc
     quantifiers: List of quantifiers
@@ -18,82 +19,85 @@ def get_quantifier(sentence, quantifiers: list[str]):
     for token in doc:
         for quantifier in quantifiers:
             if quantifier in token.text.lower():
-                if qps.find_quantifier_category(token, quantifier, sentence):
-                    return quantifier
+                return qps.find_quantifier_category(token, quantifier, doc)
 
     return None
 
-def assoc_negation_exists(sentence, q_root) -> bool:
-    """
-    sentence: doc object
-    q_root: token
-    returns: bool
-    """
+def dependency_exists(sentence):
     doc = nlp(sentence)
-    for token in doc:
-        if token.dep_ == 'neg':
-            if (token.head.text == q_root.text and token.head.i == q_root.i) or (
-                    token.head.head.text == q_root.text and token.head.head.i == q_root.i):
-                return True
-    return False
+    debugging = False
+    matcher = DependencyMatcher(nlp.vocab)
+    aux_pattern = [
+        {
+            "RIGHT_ID": "anchor_is",
+            "RIGHT_ATTRS": {"POS": "AUX"}
+        },
+        {
+            "LEFT_ID": "anchor_is",
+            "REL_OP": ">",
+            "RIGHT_ID": "noun_subject",
+            "RIGHT_ATTRS": {"DEP": "nsubj"},
+        },
+        {
+            "LEFT_ID": "anchor_is",
+            "REL_OP": ">",
+            "RIGHT_ID": "negation_particle",
+            "RIGHT_ATTRS": {"DEP": "neg"},
+        },
+        {
+            "LEFT_ID": "anchor_is",
+            "REL_OP": ">",
+            "RIGHT_ID": "associated_word",
+            "RIGHT_ATTRS": {"DEP": {"IN": ["amod", "compound"]}},
+        }
+    ]
 
+    verb_pattern = [
+        {
+            "RIGHT_ID": "anchor_verb",
+            "RIGHT_ATTRS": {"POS": "VERB"}
+        },
+        {
+            "LEFT_ID": "anchor_verb",
+            "REL_OP": ">",
+            "RIGHT_ID": "noun_subject",
+            "RIGHT_ATTRS": {"DEP": "nsubj"},
+        },
+        {
+            "LEFT_ID": "anchor_verb",
+            "REL_OP": ">",
+            "RIGHT_ID": "aux_word",
+            "RIGHT_ATTRS": {"DEP": "aux"},
+        },
+        {
+            "LEFT_ID": "anchor_verb",
+            "REL_OP": ">",
+            "RIGHT_ID": "negation_word",
+            "RIGHT_ATTRS": {"DEP": "neg", "POS": "PART"},
+        }
+    ]
+    matcher.add("find aux sentence type", [aux_pattern])
+    matcher.add("find verb sentence type", [verb_pattern])
 
-def get_q_root(quantifier):
-    case_1 = ['nsubj', 'nsubjpass']
-    case_2 = ['det', 'poss', 'advmod', 'nmod']
-    dep = quantifier.dep_
+    matches = matcher(doc)
 
-    q_head = quantifier.head
-    if dep in case_1:
-        if q_head.dep_ == 'nsubj' or q_head.dep_ == 'auxpass':
-            return q_head.head
-        else:
-            return q_head
-    elif dep in case_2:
-        return q_head.head
+    if debugging:
+        match_id, token_ids = matches[0]
+        print(token_ids)
+        for i in range(len(token_ids)):
+            print(verb_pattern[i]["RIGHT_ID"] + ":", doc[token_ids[i]].text)
 
-
-def reversed_traversal(sentence, quantifiers):
-    """
-    sentence: doc object
-    """
-    doc = nlp(sentence)
-    negation = None
-    for token in doc:
-        if token.dep_ == 'neg' or token.dep_ == 'preconj':
-            negation = token
-    if negation == None:
-        return False
-
-    print(f"Negation: {negation}")
-    ancestor = negation
-    while ancestor != ancestor.head:
-        ancestor = ancestor.head
-
-    print(f"Ancestor: {ancestor}")
-    for quantifier in quantifiers:
-
-        if ancestor.dep_ == 'ROxOT' and quantifier in ancestor.text:
-            return True
-        for token in doc:
-            if token.head == ancestor and quantifier in token.text and token.i < ancestor.i:
-                return True
-
-    return False
-
-
-def is_quantifier_negation(sentence: str, quantifiers):
-    quantifier = get_quantifier(sentence, quantifiers)
-    if quantifier is None:
-        return False
-    if reversed_traversal(sentence, quantifiers):
+    if matches: #Truthy/ Falsy Value
         return True
 
-    "Second Check"
-    q_root = get_q_root(quantifier)
-    print("Hello")
-    print(q_root)
-    if assoc_negation_exists(sentence, q_root):
+    return False
+
+
+def is_quantifier_negation(sentence: str, quantifiers: list[str]):
+    if get_quantifier(sentence, quantifiers) is None:
+        return False
+
+    if dependency_exists(sentence):
         return True
 
     return False
@@ -117,9 +121,10 @@ def find_quantifier_negation(sentences, quantifiers):
     indices = []
     for sentence in sentences:
         if is_quantifier_negation(sentence, quantifiers):
-            quants.append(qps.find_quantifier_category(sentence, quantifiers)) #todo change into quantifier category
+            quants.append(qps.find_quantifier_category(sentence, quantifiers, sentence)) #todo change into quantifier category
             sents.append(sentence)
             indices.append(i)
+            print("> ", sentence)
             # standalone.append("True" if is_standalone(sentence, quantifiers) else "False")
 
         i = i+1
