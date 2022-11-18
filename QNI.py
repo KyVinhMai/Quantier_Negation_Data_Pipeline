@@ -83,13 +83,13 @@ def dependency_exists(sentence):
     matches = matcher(doc)
 
     if debugging:
-        match_id, token_ids = matches[0]
-        print(token_ids)
-        for i in range(len(token_ids)):
-            print(verb_pattern[i]["RIGHT_ID"] + ":", doc[token_ids[i]].text)
+        if matches != []:
+            match_id, token_ids = matches[0]
+            print(token_ids)
+            for i in range(len(token_ids)):
+                print(verb_pattern[i]["RIGHT_ID"] + ":", doc[token_ids[i]].text)
 
     if matches: #Truthy/ Falsy Value
-
         return True
 
     return False
