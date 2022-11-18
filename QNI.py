@@ -5,6 +5,7 @@ spacy.prefer_gpu()
 import en_core_web_sm
 import Quantifier_Phrase_Segmentation as qps
 nlp = en_core_web_sm.load()
+from csv import writer
 print('INFO: spaCy initialized successfully.')
 
 
@@ -25,7 +26,7 @@ def get_quantifier(sentence: str, quantifiers: list[str]):
 
 def dependency_exists(sentence):
     doc = nlp(sentence)
-    debugging = False
+    debugging = True
     matcher = DependencyMatcher(nlp.vocab)
     aux_pattern = [
         {
@@ -88,19 +89,18 @@ def dependency_exists(sentence):
             print(verb_pattern[i]["RIGHT_ID"] + ":", doc[token_ids[i]].text)
 
     if matches: #Truthy/ Falsy Value
+
         return True
 
     return False
 
 
 def is_quantifier_negation(sentence: str, quantifiers: list[str]):
+    print(sentence)
     if get_quantifier(sentence, quantifiers) is None:
         return False
 
-    if dependency_exists(sentence):
-        return True
-
-    return False
+    return dependency_exists(sentence)
 
 def validate_quant_neg(transcript: list[str], quantifiers):
     for sentence in transcript:
@@ -120,6 +120,7 @@ def find_quantifier_negation(sentences, quantifiers):
     i = 0
     indices = []
     for sentence in sentences:
+        # try:
         if is_quantifier_negation(sentence, quantifiers):
             quants.append(qps.find_quantifier_category(sentence, quantifiers, sentence)) #todo change into quantifier category
             sents.append(sentence)
@@ -128,6 +129,12 @@ def find_quantifier_negation(sentences, quantifiers):
             # standalone.append("True" if is_standalone(sentence, quantifiers) else "False")
 
         i = i+1
+        # except IndexError as e:
+        #     print("Error with", sentence)
+        #     print(e)
+        #     with open('Sentence_issues.csv', 'w', encoding='UTF16') as f:
+        #         csv_writer = writer(f)
+        #         csv_writer.writerow([f"{sentence} + {e}"])
 
     print('INFO: Search completed with ' + str(len(sents)) + ' potential quantifier + negations.')
     print("\n")
@@ -148,5 +155,5 @@ def get_context(sentences, indices):
     return ret
 
 if __name__ == '__main__':
-    sentence = "everybody didn't have body armor"
+    sentence = "CHARLES EGLY: I'm so happy because this time everything is open, even the bars, the restaurants. So it's really nice. There are not that many people."
     print(is_quantifier_negation(sentence, ['every', 'some', 'no']))

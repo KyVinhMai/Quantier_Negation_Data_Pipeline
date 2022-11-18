@@ -17,7 +17,7 @@ quant_count = {
 
 found_sentences = []
 
-quantifiers = ['every', 'some', "any", "no"]
+quantifiers = ['every']
 
 
 
@@ -93,11 +93,12 @@ def main():
 
 def crawl_NPR_archives():
 
-    try:
-        main()
-    except Exception as e:
-        print(e)
-        pass
+    main()
+    # try:
+    #     main()
+    # except Exception as e:
+    #     print(e, ">>>>>>>>>>>>> Main function failed! <<<<<<<<<<<<<<<<<<<<<<")
+    #     pass
 
     try:
         write_csv()

@@ -111,11 +111,12 @@ def is_quantifier_phrase(quantifier: str, sentence: nlp):
     matches = matcher(sentence)
     _, token_id = matches[0] #token id returns the indices of the anchors
 
+
     phrase = sentence[token_id[0]:token_id[-1] + 1].text #We want the span of the dependency
 
     return phrase if quantifier in phrase else quantifier + " " + phrase
 
-def find_quantifier_category(token: spacy.tokens, quantifier, sentence: nlp) -> str or None:
+def find_quantifier_category(token, quantifier: str,  doc: nlp) -> str or None:
     """
     token: Word detected, which contains the quantifier inside the string
     quantifier: The quantifier we are searching for
@@ -127,20 +128,21 @@ def find_quantifier_category(token: spacy.tokens, quantifier, sentence: nlp) -> 
     > Quantifier Phrase = Every one of them
     """
 
-    if neighbor_is_adverb(token, sentence):
+    if neighbor_is_adverb(token, doc):
         return None
 
     if is_quantifier_word(token, quantifier):
         return token.text
     else:
-        check_noun = is_quantifier_noun(token, sentence)
+        check_noun = is_quantifier_noun(token, doc)
 
     if check_noun is not None:
         return check_noun
     else:
-        return is_quantifier_phrase(quantifier, sentence)
+        return is_quantifier_phrase(quantifier, doc)
 
 if __name__ == "__main__":
-    sentence = nlp("everybody else is not the best and brightest")
-    word = nlp("everybody")[0]
+    #377,643
+    sentence = nlp("And the weirdest thing - they're homesick. We want to think, oh, if you live in a horrible place that's had, you know, where your parents have died of starvation or where you're given dead-end jobs or where there's no food, many of these miss their homeland. And if you don't feel at home in Seoul or somewhere else, you're going to miss a place that everyone else on earth is going that's living hell, you should leave. But it's not a Hollywood ending, that's for sure, for them.  ")
+    word = nlp("everyone")[0]
     print(find_quantifier_category(word, "every", sentence))
