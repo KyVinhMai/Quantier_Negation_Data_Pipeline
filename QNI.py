@@ -1,7 +1,8 @@
 # Quantifier Negation Sentence Identifier
 import spacy
-from spacy.matcher import  DependencyMatcher
+from spacy.matcher import DependencyMatcher
 spacy.prefer_gpu()
+import dependency_patterns as dp
 import en_core_web_sm
 import Quantifier_Phrase_Segmentation as qps
 nlp = en_core_web_sm.load()
@@ -29,58 +30,8 @@ def dependency_exists(sentence):
     doc = nlp(sentence)
     debugging = True
     dependency_matcher = DependencyMatcher(nlp.vocab)
-    aux_pattern = [
-        {
-            "RIGHT_ID": "anchor_is",
-            "RIGHT_ATTRS": {"POS": "AUX"}
-        },
-        {
-            "LEFT_ID": "anchor_is",
-            "REL_OP": ">",
-            "RIGHT_ID": "noun_subject",
-            "RIGHT_ATTRS": {"DEP": {"IN" : ["nsubj", "nsubjpass"]}, "ORTH":{}},
-        },
-        {
-            "LEFT_ID": "anchor_is",
-            "REL_OP": ">",
-            "RIGHT_ID": "negation_particle",
-            "RIGHT_ATTRS": {"DEP": "neg"},
-        },
-        {
-            "LEFT_ID": "anchor_is",
-            "REL_OP": ">",
-            "RIGHT_ID": "associated_word",
-            "RIGHT_ATTRS": {"DEP": {"IN": ["amod", "compound"]}},
-        },
-
-    ]
-
-    verb_pattern = [
-        {
-            "RIGHT_ID": "anchor_verb",
-            "RIGHT_ATTRS": {"POS": "VERB"}
-        },
-        {
-            "LEFT_ID": "anchor_verb",
-            "REL_OP": ">",
-            "RIGHT_ID": "noun_subject",
-            "RIGHT_ATTRS": {"DEP": "nsubj"},
-        },
-        {
-            "LEFT_ID": "anchor_verb",
-            "REL_OP": ">",
-            "RIGHT_ID": "aux_word",
-            "RIGHT_ATTRS": {"DEP": "aux"},
-        },
-        {
-            "LEFT_ID": "anchor_verb",
-            "REL_OP": ">",
-            "RIGHT_ID": "negation_word",
-            "RIGHT_ATTRS": {"DEP": "neg", "POS": "PART"},
-        }
-    ]
-    dependency_matcher.add("find aux sentence type", [aux_pattern])
-    dependency_matcher.add("find verb sentence type", [verb_pattern])
+    dependency_matcher.add("find aux sentence type", [dp.aux_pattern])
+    dependency_matcher.add("find verb sentence type", [dp.verb_pattern])
 
     matches = dependency_matcher(doc)
 
@@ -89,7 +40,7 @@ def dependency_exists(sentence):
             match_id, token_ids = matches[0]
             print(token_ids)
             for i in range(len(token_ids)):
-                print(verb_pattern[i]["RIGHT_ID"] + ":", doc[token_ids[i]].text)
+                print(dp.verb_pattern[i]["RIGHT_ID"] + ":", doc[token_ids[i]].text)
 
     if matches: #Truthy/ Falsy Value
         return True
@@ -143,7 +94,7 @@ def find_quantifier_negation(sentences: list[str], quantifiers):
     with open('Sentence_issues.csv', 'w', encoding='UTF16') as f:
         csv_writer = writer(f)
         for line in errors:
-            csv_writer.writerow([line])
+            csv_writer.writerow(line)
 
     print('INFO: Search completed with ' + str(len(sents)) + ' potential quantifier + negations.')
     print("\n")
@@ -164,5 +115,5 @@ def get_context(sentences, indices) -> str:
     return "".join(ret)
 
 if __name__ == '__main__':
-    sentence = ["CHARLES EGLY:everything you say, every lyric to every song, does not has -- does not have to be socially redemptive", "everybody in a bathrobe ain't just getting a massage"]
+    sentence = ["And I spent the next several weeks, every night, calling people, telling them it's not today.", "everybody in a bathrobe ain't just getting a massage"]
     print(find_quantifier_negation(sentence, ['every', 'some', 'no']))
