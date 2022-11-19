@@ -5,6 +5,10 @@ from bs4 import BeautifulSoup
 import QNI as qn
 import NPR_webscraper as npr
 from clause_counter import count_clauses
+import spacy
+spacy.prefer_gpu()
+import en_core_web_sm
+nlp = en_core_web_sm.load()
 
 clauses = 0
 ID = 400
@@ -25,6 +29,18 @@ hub_url = "https://www.npr.org/programs/all-things-considered/archive?date=12-31
 page = requests.get(hub_url)
 soup = BeautifulSoup(page.content, "html.parser")
 
+def segement_sentences(variable_amount: list[str]) -> list[str]:
+    new_sentences= []
+
+    for group in variable_amount:
+        doc = nlp(group)
+        for line in doc.sents:
+            new_sentences.append(line.text)
+
+    return new_sentences
+
+
+
 def validate_quant_neg(article_url: str) -> None:
     global ID
     global clauses #Cardinal Sins
@@ -33,7 +49,7 @@ def validate_quant_neg(article_url: str) -> None:
     soup = BeautifulSoup(page.content, "html.parser")
 
     try:
-        sentences = npr.extract_transcript(soup)
+        sentences = segement_sentences(npr.extract_transcript(soup))
 
         quants, matches, indices = qn.find_quantifier_negation(sentences, quantifiers)
         if matches:
@@ -92,13 +108,11 @@ def main():
     search_months(years)
 
 def crawl_NPR_archives():
-
-    main()
-    # try:
-    #     main()
-    # except Exception as e:
-    #     print(e, ">>>>>>>>>>>>> Main function failed! <<<<<<<<<<<<<<<<<<<<<<")
-    #     pass
+    try:
+        main()
+    except Exception as e:
+        print(e, ">>>>>>>>>>>>> Main function failed! <<<<<<<<<<<<<<<<<<<<<<")
+        pass
 
     try:
         write_csv()

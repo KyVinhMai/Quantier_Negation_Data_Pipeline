@@ -20,14 +20,15 @@ def get_quantifier(sentence: str, quantifiers: list[str]):
     for token in doc:
         for quantifier in quantifiers:
             if quantifier in token.text.lower():
-                return qps.find_quantifier_category(token, quantifier, doc)
+                if qps.find_quantifier_category(token, quantifier, doc):
+                    return token, quantifier
 
     return None
 
 def dependency_exists(sentence):
     doc = nlp(sentence)
     debugging = True
-    matcher = DependencyMatcher(nlp.vocab)
+    dependency_matcher = DependencyMatcher(nlp.vocab)
     aux_pattern = [
         {
             "RIGHT_ID": "anchor_is",
@@ -37,7 +38,7 @@ def dependency_exists(sentence):
             "LEFT_ID": "anchor_is",
             "REL_OP": ">",
             "RIGHT_ID": "noun_subject",
-            "RIGHT_ATTRS": {"DEP": "nsubj"},
+            "RIGHT_ATTRS": {"DEP": {"IN" : ["nsubj", "nsubjpass"]}, "ORTH":{}},
         },
         {
             "LEFT_ID": "anchor_is",
@@ -50,7 +51,8 @@ def dependency_exists(sentence):
             "REL_OP": ">",
             "RIGHT_ID": "associated_word",
             "RIGHT_ATTRS": {"DEP": {"IN": ["amod", "compound"]}},
-        }
+        },
+
     ]
 
     verb_pattern = [
@@ -77,13 +79,13 @@ def dependency_exists(sentence):
             "RIGHT_ATTRS": {"DEP": "neg", "POS": "PART"},
         }
     ]
-    matcher.add("find aux sentence type", [aux_pattern])
-    matcher.add("find verb sentence type", [verb_pattern])
+    dependency_matcher.add("find aux sentence type", [aux_pattern])
+    dependency_matcher.add("find verb sentence type", [verb_pattern])
 
-    matches = matcher(doc)
+    matches = dependency_matcher(doc)
 
     if debugging:
-        if matches != []:
+        if matches:
             match_id, token_ids = matches[0]
             print(token_ids)
             for i in range(len(token_ids)):
@@ -94,9 +96,10 @@ def dependency_exists(sentence):
 
     return False
 
+def link_quantifier_to_dep():
+    pass
 
-def is_quantifier_negation(sentence: str, quantifiers: list[str]):
-    print(sentence)
+def is_quantifier_negation(sentence: str, quantifiers: list[str]) -> bool:
     if get_quantifier(sentence, quantifiers) is None:
         return False
 
@@ -112,35 +115,41 @@ def validate_quant_neg(transcript: list[str], quantifiers):
 def is_standalone():
     pass
 
-def find_quantifier_negation(sentences, quantifiers):
+def find_quantifier_negation(sentences: list[str], quantifiers):
     print('INFO: Beginning search for quantifier + negation statements.')
     quants = []
     sents = []
     standalone = []
     i = 0
     indices = []
+    errors = []
     for sentence in sentences:
-        # try:
-        if is_quantifier_negation(sentence, quantifiers):
-            quants.append(qps.find_quantifier_category(sentence, quantifiers, sentence)) #todo change into quantifier category
-            sents.append(sentence)
-            indices.append(i)
-            print("> ", sentence)
-            # standalone.append("True" if is_standalone(sentence, quantifiers) else "False")
+        try:
+            if is_quantifier_negation(sentence, quantifiers):
+                token, quant = get_quantifier(sentence, quantifiers)
+                quants.append(qps.find_quantifier_category(token, quant, nlp(sentence))) #todo change into quantifier category
+                sents.append(sentence)
+                indices.append(i)
+                print(">>>>> ", sentence)
+                # standalone.append("True" if is_standalone(sentence, quantifiers) else "False")
 
-        i = i+1
-        # except IndexError as e:
-        #     print("Error with", sentence)
-        #     print(e)
-        #     with open('Sentence_issues.csv', 'w', encoding='UTF16') as f:
-        #         csv_writer = writer(f)
-        #         csv_writer.writerow([f"{sentence} + {e}"])
+            i = i+1
+        except IndexError as e:
+            print("Error with", sentence)
+            errors.append(f"{sentence} + {e}")
+            print(e)
+
+
+    with open('Sentence_issues.csv', 'w', encoding='UTF16') as f:
+        csv_writer = writer(f)
+        for line in errors:
+            csv_writer.writerow([line])
 
     print('INFO: Search completed with ' + str(len(sents)) + ' potential quantifier + negations.')
     print("\n")
     return quants, sents, indices
 
-def get_context(sentences, indices):
+def get_context(sentences, indices) -> str:
     ret = []
     for index in indices:
         start = index - 3
@@ -152,8 +161,8 @@ def get_context(sentences, indices):
         for i in range(start, end):
             ret.append(sentences[i])
         ret.append('**********')
-    return ret
+    return "".join(ret)
 
 if __name__ == '__main__':
-    sentence = "CHARLES EGLY: I'm so happy because this time everything is open, even the bars, the restaurants. So it's really nice. There are not that many people."
-    print(is_quantifier_negation(sentence, ['every', 'some', 'no']))
+    sentence = ["CHARLES EGLY:everything you say, every lyric to every song, does not has -- does not have to be socially redemptive", "everybody in a bathrobe ain't just getting a massage"]
+    print(find_quantifier_negation(sentence, ['every', 'some', 'no']))
