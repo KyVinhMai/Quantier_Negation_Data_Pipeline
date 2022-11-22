@@ -10,25 +10,38 @@ from csv import writer
 print('INFO: spaCy initialized successfully.')
 
 
-def get_quantifier(sentence: str, quantifiers: list[str]):
+def get_quantifier(sentence: str, quantifiers: list[str]) -> tuple[str, str] or None:
     """
     sentence: Doc
     quantifiers: List of quantifiers
     returns: quantifier token
     """
+    def get_negation(sentence: str) -> int:
+        doc = nlp(sentence)
+        neg_matcher = DependencyMatcher(nlp.vocab)
+        neg_matcher.add("find neg particle", [dp.neg_pattern])
+        matches = neg_matcher(doc)
+
+        if matches:
+            match_id, token_ids = matches[0]
+            return token_ids[0]
+
     doc = nlp(sentence)
 
     for token in doc:
         for quantifier in quantifiers:
             if quantifier in token.text.lower():
-                if qps.find_quantifier_category(token, quantifier, doc):
-                    return token, quantifier
+                neg_index = get_negation(sentence)
+                if neg_index:
+                    if qps.find_quantifier_category(token, quantifier, doc[:neg_index]): #Get the splice of the sentence before negation
+                        return token, quantifier, neg_index
 
     return None
 
-def dependency_exists(sentence):
+def dependency_exists(sentence: str):
     doc = nlp(sentence)
-    debugging = True
+    debugging = False
+
     dependency_matcher = DependencyMatcher(nlp.vocab)
     dependency_matcher.add("find aux sentence type", [dp.aux_pattern])
     dependency_matcher.add("find verb sentence type", [dp.verb_pattern])
@@ -46,6 +59,7 @@ def dependency_exists(sentence):
         return True
 
     return False
+
 
 def link_quantifier_to_dep():
     pass
@@ -77,8 +91,8 @@ def find_quantifier_negation(sentences: list[str], quantifiers):
     for sentence in sentences:
         try:
             if is_quantifier_negation(sentence, quantifiers):
-                token, quant = get_quantifier(sentence, quantifiers)
-                quants.append(qps.find_quantifier_category(token, quant, nlp(sentence))) #todo change into quantifier category
+                token, quant, neg_index = get_quantifier(sentence, quantifiers)
+                quants.append(qps.find_quantifier_category(token, quant, nlp(sentence)[:neg_index])) #todo change into quantifier category
                 sents.append(sentence)
                 indices.append(i)
                 print(">>>>> ", sentence)
@@ -115,5 +129,5 @@ def get_context(sentences, indices) -> str:
     return "".join(ret)
 
 if __name__ == '__main__':
-    sentence = ["And I spent the next several weeks, every night, calling people, telling them it's not today.", "everybody in a bathrobe ain't just getting a massage"]
+    sentence = ["everyone else's fairy tale story - mine - really wasn't quite what they thought it was-", "everybody in a bathrobe ain't just getting a massage"]
     print(find_quantifier_negation(sentence, ['every', 'some', 'no']))

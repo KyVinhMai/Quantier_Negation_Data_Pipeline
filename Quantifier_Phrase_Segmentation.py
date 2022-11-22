@@ -47,14 +47,27 @@ def neighbor_is_adverb(token, doc: nlp) -> bool:
     if word_neighbor.pos_ == "ADV" and token.pos_ == "advmod":
         return True
 
-def possessive_exists(token, doc: nlp):
+def possessive_exists(token, doc: nlp) -> str:
     index = find_index(token, doc)
     neighbor = doc[index].nbor()
 
-    if neighbor.dep_ == "case" and neighbor.pos_ == "PART":
-        return
+    """
+    Checks to see if neighboring word is a possessive particle or has
+    the else word next to it.
+    """
+    if (neighbor.dep_ == "case" and neighbor.pos_ == "PART") or \
+            (neighbor.dep_ == "advmod" and neighbor.pos_ == "ADV"):
+        poss_matcher = DependencyMatcher(nlp.vocab)
+        poss_matcher.add("possessive_match", [dp.poss_pattern(token.text)])
+        matches = poss_matcher(doc)
 
+        if matches:
+            _, anchors = matches[0]  # returns the indices of the anchors
+            quant = anchors[1]
+            poss_noun = anchors[0]
+            return doc[quant:poss_noun + 1].text
 
+    return token.text
 
 def is_quantifier_noun(token, doc: nlp):#Todo use matcher to find the index
     """
@@ -63,26 +76,32 @@ def is_quantifier_noun(token, doc: nlp):#Todo use matcher to find the index
     index = find_index(token, doc)
     word_neighbor = doc[index].nbor()
 
-    #check for conjunctions
-    "If there is a 'conj' and 'cc' in the depenencies of the children, it signifies a conjunction"
-    if "conj" in [child.dep_ for child in word_neighbor.children]:
-        for token in doc:
-            if token.dep_ == "conj":
-                return doc[index: token.i + 1].text
+    # #check for conjunctions
+    # "If there is a 'conj' and 'cc' in the depenencies of the children, it signifies a conjunction"
+    # if "conj" in [child.dep_ for child in word_neighbor.children]:
+    #     for token in doc:
+    #         if token.dep_ == "conj":
+    #             return doc[index: token.i + 1].text
 
     #Check for noun
-    """
-    Checks if the neighboring tokens are nouns or if it's ancestors are nouns.
-    """
-    ancestors_dep = [word.dep_ for word in doc[index].ancestors]
+    det_matcher = DependencyMatcher(nlp.vocab)
+    det_matcher.add("determiner_patter", [dp.det_pattern(token.text)])
+    matches = det_matcher(doc)
 
-    if 'nsubj' in ancestors_dep or 'nsubjpass' in ancestors_dep\
-        and doc[index].pos_ == "DET" and doc[index].dep_ == "det":
-
-            "Finds the noun that has the nsubj or nsubjpass dependency"
-            for token in doc:
-                if token.dep_ == "nsubj" or token.dep_ == "nsubjpass":
-                    return doc[index: token.i + 1].text
+    if matches:
+        _, anchors = matches[0]
+        quant = anchors[1]
+        noun = anchors[0]
+        return doc[quant:noun + 1].text
+    # ancestors_dep = [word.dep_ for word in doc[index].ancestors]
+    #
+    # if 'nsubj' in ancestors_dep or 'nsubjpass' in ancestors_dep\
+    #     and doc[index].pos_ == "DET" and doc[index].dep_ == "det":
+    #
+    #         "Finds the noun that has the nsubj or nsubjpass dependency"
+    #         for token in doc:
+    #             if token.dep_ == "nsubj" or token.dep_ == "nsubjpass":
+    #                 return doc[index: token.i + 1].text
 
 def is_quantifier_phrase(quantifier: str, doc: nlp):
     """
@@ -128,8 +147,7 @@ def find_quantifier_category(token, quantifier: str,  doc: nlp) -> str or None:
         return None
 
     if is_quantifier_word(token, quantifier):
-        return token.text
-        # return possessive_exists(token, doc)
+        return possessive_exists(token, doc)
     else:
         check_noun = is_quantifier_noun(token, doc)
 
@@ -139,6 +157,9 @@ def find_quantifier_category(token, quantifier: str,  doc: nlp) -> str or None:
         return is_quantifier_phrase(quantifier, doc)
 
 if __name__ == "__main__":
+    sentence2 = nlp("everyone else's fairy tale story really wasn't quite what they thought it was-")
+    sentence1 = nlp("everything I make is not going to be everybody's cup of tea")
     sentence = nlp("everyone's competing memoirs don't open up all the debates we've been talking about")
     word = nlp("everyone")[0]
-    print(find_quantifier_category(word, "every", sentence))
+    print(find_quantifier_category(word, "every", sentence2))
+
