@@ -34,6 +34,15 @@ class Every_Neg_Detectiontest(unittest.TestCase):
                 print(
                     f"AssertError Is Quantifier Negation: *Line {self.dataset.index(line)}* - {line}")
 
+    # def test_reject_every_negatives(self):
+    #     self.dataset = quantifier_data_files["every_negatives"]
+    #
+    #     try:
+    #         for line in self.dataset:
+    #             self.assertEqual(len([quant for quant in cases if quant is not None]), 391)
+    #     except Exception as e:
+    #         print(f"{e}, \n >>>>>>>Error occured at line {self.dataset.index(line)}: {line}")
+
 
 class No_Neg_Detectiontest(unittest.TestCase):
     def test_if_function_works_on_no(self):

@@ -14,7 +14,7 @@ def get_quantifier(sentence: str, quantifiers: list[str]) -> tuple[str, str] or 
     """
     sentence: Doc
     quantifiers: List of quantifiers
-    returns: quantifier token
+    returns: token, quantifier, neg_idex,  quant_orth
     """
     def get_negation(sentence: str) -> int:
         doc = nlp(sentence)
@@ -31,16 +31,17 @@ def get_quantifier(sentence: str, quantifiers: list[str]) -> tuple[str, str] or 
     for token in doc:
         for quantifier in quantifiers:
             if quantifier in token.text.lower():
-                neg_index = get_negation(sentence)
+                neg_index = get_negation(sentence) #Making the assumption that the quantifier comes before the negation
                 if neg_index:
-                    if qps.find_quantifier_category(token, quantifier, doc[:neg_index]): #Get the splice of the sentence before negation
-                        return token, quantifier, neg_index
+                    quant_text = qps.find_quantifier_category(token, quantifier, doc[:neg_index])
+                    if quant_text: #Get the splice of the sentence before negation
+                        return token, quantifier, neg_index, quant_text
 
-    return None
+    return None, None, None, None
 
-def dependency_exists(sentence: str):
+def dependency_exists(sentence: str, quant_segment: str):
     doc = nlp(sentence)
-    debugging = False
+    debugging = True
 
     dependency_matcher = DependencyMatcher(nlp.vocab)
     dependency_matcher.add("find aux sentence type", [dp.aux_pattern])
@@ -48,15 +49,19 @@ def dependency_exists(sentence: str):
 
     matches = dependency_matcher(doc)
 
-    if debugging:
-        if matches:
-            match_id, token_ids = matches[0]
-            print(token_ids)
-            for i in range(len(token_ids)):
-                print(dp.verb_pattern[i]["RIGHT_ID"] + ":", doc[token_ids[i]].text)
+    if matches:
+        match_id, token_ids = matches[0]
+        noun_subject_index = token_ids[1]
 
-    if matches: #Truthy/ Falsy Value
-        return True
+        if debugging:
+                print("-"*36)
+                print(token_ids)
+                for i in range(len(token_ids)):
+                    print(dp.verb_pattern[i]["RIGHT_ID"] + ":", doc[token_ids[i]].text)
+                print("-" * 36)
+
+        if doc[noun_subject_index].text in quant_segment:
+            return True
 
     return False
 
@@ -65,10 +70,11 @@ def link_quantifier_to_dep():
     pass
 
 def is_quantifier_negation(sentence: str, quantifiers: list[str]) -> bool:
-    if get_quantifier(sentence, quantifiers) is None:
+    token, quantifier, neg_index, quant_text = get_quantifier(sentence, quantifiers)
+    if token is None:
         return False
 
-    return dependency_exists(sentence)
+    return dependency_exists(sentence, quant_text)
 
 def validate_quant_neg(transcript: list[str], quantifiers):
     for sentence in transcript:
@@ -80,7 +86,7 @@ def validate_quant_neg(transcript: list[str], quantifiers):
 def is_standalone():
     pass
 
-def find_quantifier_negation(sentences: list[str], quantifiers):
+def find_quantifier_negation(sentences: list[str], quantifiers=("every", "some")):
     print('INFO: Beginning search for quantifier + negation statements.')
     quants = []
     sents = []
@@ -91,11 +97,11 @@ def find_quantifier_negation(sentences: list[str], quantifiers):
     for sentence in sentences:
         try:
             if is_quantifier_negation(sentence, quantifiers):
-                token, quant, neg_index = get_quantifier(sentence, quantifiers)
+                token, quant, neg_index, _ = get_quantifier(sentence, quantifiers)
                 quants.append(qps.find_quantifier_category(token, quant, nlp(sentence)[:neg_index])) #todo change into quantifier category
                 sents.append(sentence)
                 indices.append(i)
-                print(">>>>> ", sentence)
+                print(">>>>>> ", sentence, "<<<<<<<")
                 # standalone.append("True" if is_standalone(sentence, quantifiers) else "False")
 
             i = i+1
@@ -110,6 +116,7 @@ def find_quantifier_negation(sentences: list[str], quantifiers):
         for line in errors:
             csv_writer.writerow(line)
 
+    print("="*60)
     print('INFO: Search completed with ' + str(len(sents)) + ' potential quantifier + negations.')
     print("\n")
     return quants, sents, indices
@@ -129,5 +136,5 @@ def get_context(sentences, indices) -> str:
     return "".join(ret)
 
 if __name__ == '__main__':
-    sentence = ["everyone else's fairy tale story - mine - really wasn't quite what they thought it was-", "everybody in a bathrobe ain't just getting a massage"]
-    print(find_quantifier_negation(sentence, ['every', 'some', 'no']))
+    sentence = ["No! That isn't right."]
+    print(find_quantifier_negation(sentence))

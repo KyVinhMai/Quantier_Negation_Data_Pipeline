@@ -12,7 +12,9 @@ the QNI can definitely say that the negation dependency is being applied to
 the quantifier itself
 """
 
-
+#todo list. Make sure no has no punctuation after
+#Nobody who wears a blue coat, wasn't here.
+#
 def is_quantifier_word(token, quantifier: str) -> str or None:
     if token.text.lower() == quantifier + "body":
         return token.text
@@ -157,7 +159,7 @@ def find_quantifier_category(token, quantifier: str,  doc: nlp) -> str or None:
         return is_quantifier_phrase(quantifier, doc)
 
 if __name__ == "__main__":
-    sentence2 = nlp("everyone else's fairy tale story really wasn't quite what they thought it was-")
+    sentence2 = nlp("No! That isn't right.")
     sentence1 = nlp("everything I make is not going to be everybody's cup of tea")
     sentence = nlp("everyone's competing memoirs don't open up all the debates we've been talking about")
     word = nlp("everyone")[0]

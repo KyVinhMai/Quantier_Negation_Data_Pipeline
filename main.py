@@ -21,7 +21,7 @@ quant_count = {
 
 found_sentences = []
 
-quantifiers = ['every']
+quantifiers = ['every', "some", "all"]
 
 
 
