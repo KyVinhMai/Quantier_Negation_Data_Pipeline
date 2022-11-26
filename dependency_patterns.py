@@ -1,26 +1,26 @@
 aux_pattern = [
         {
-            "RIGHT_ID": "anchor_is",
+            "RIGHT_ID": "anchor_aux",
             "RIGHT_ATTRS": {"POS": "AUX"}
         },
         {
-            "LEFT_ID": "anchor_is",
+            "LEFT_ID": "anchor_aux",
             "REL_OP": ">",
             "RIGHT_ID": "noun_subject",
             "RIGHT_ATTRS": {"DEP": {"IN" : ["nsubj", "nsubjpass"]}},
         },
         {
-            "LEFT_ID": "anchor_is",
+            "LEFT_ID": "anchor_aux",
             "REL_OP": ">",
             "RIGHT_ID": "negation_particle",
             "RIGHT_ATTRS": {"DEP": "neg"},
         },
-        {
-            "LEFT_ID": "anchor_is",
-            "REL_OP": ">",
-            "RIGHT_ID": "associated_word",
-            "RIGHT_ATTRS": {"DEP": {"IN": ["amod", "compound"]}},
-        },
+        # {
+        #     "LEFT_ID": "anchor_is",
+        #     "REL_OP": ">",
+        #     "RIGHT_ID": "associated_word",
+        #     "RIGHT_ATTRS": {"DEP": {"IN": ["amod", "compound"]}},
+        # },
 
     ]
 

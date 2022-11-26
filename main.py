@@ -21,7 +21,7 @@ quant_count = {
 
 found_sentences = []
 
-quantifiers = ['every', "some", "all"]
+quantifiers = ['every']
 
 
 
@@ -40,7 +40,6 @@ def segement_sentences(variable_amount: list[str]) -> list[str]:
     return new_sentences
 
 
-
 def validate_quant_neg(article_url: str) -> None:
     global ID
     global clauses #Cardinal Sins
@@ -56,7 +55,7 @@ def validate_quant_neg(article_url: str) -> None:
             context = qn.get_context(sentences, indices)
             #todo grab audiofile
             title, date = npr.extract_metadata(soup)
-            print(f"Found an Article '{title}' with {quants}")
+            print(f" + Found an Article '{title}' with {quants} \n")
 
             for i in range(len(quants)):
 
@@ -96,16 +95,24 @@ def search_months(year_list: list):
         "We put link.a to get the descendent of <li>"
 
 def write_csv():
-    with open('NPR_quantneg_sentences.csv', 'w', encoding='UTF8') as f:
+    with open('NPR_quantneg_sentences.csv', 'w', newline='', encoding='UTF8') as f:
         csv_writer = writer(f)
         csv_writer.writerow(header)
         for sent in found_sentences:
             csv_writer.writerow(sent)
 
 def main():
-    archive_container = soup.find("nav", {"class": "archive-nav"})
-    years = archive_container.find_all("div")[1:] #Remove year 2022 as it has no handwritten transcripts
-    search_months(years)
+    # archive_container = soup.find("nav", {"class": "archive-nav"})
+    # years = archive_container.find_all("div")[1:] #Remove year 2022 as it has no handwritten transcripts
+    # search_months(years)
+    links = []
+    with open("npr_links.txt", "r") as file:
+        for line in file:
+            links.append(line.rstrip('\n'))
+
+    for link in links:
+        validate_quant_neg(link)
+
 
 def crawl_NPR_archives():
     try:

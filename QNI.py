@@ -41,7 +41,7 @@ def get_quantifier(sentence: str, quantifiers: list[str]) -> tuple[str, str] or 
 
 def dependency_exists(sentence: str, quant_segment: str):
     doc = nlp(sentence)
-    debugging = True
+    debugging = False
 
     dependency_matcher = DependencyMatcher(nlp.vocab)
     dependency_matcher.add("find aux sentence type", [dp.aux_pattern])
@@ -86,7 +86,7 @@ def validate_quant_neg(transcript: list[str], quantifiers):
 def is_standalone():
     pass
 
-def find_quantifier_negation(sentences: list[str], quantifiers=("every", "some")):
+def find_quantifier_negation(sentences: list[str], quantifiers=("every", "some", "all")):
     print('INFO: Beginning search for quantifier + negation statements.')
     quants = []
     sents = []
@@ -106,19 +106,29 @@ def find_quantifier_negation(sentences: list[str], quantifiers=("every", "some")
 
             i = i+1
         except IndexError as e:
-            print("Error with", sentence)
+            print("QNI Error with", sentence)
             errors.append(f"{sentence} + {e}")
             print(e)
+
+        # if is_quantifier_negation(sentence, quantifiers):
+        #     token, quant, neg_index, _ = get_quantifier(sentence, quantifiers)
+        #     quants.append(qps.find_quantifier_category(token, quant, nlp(sentence)[
+        #                                                              :neg_index]))  # todo change into quantifier category
+        #     sents.append(sentence)
+        #     indices.append(i)
+        #     print(">>>>>> ", sentence, "<<<<<<<")
+        #     # standalone.append("True" if is_standalone(sentence, quantifiers) else "False")
+
+        # i = i + 1
 
 
     with open('Sentence_issues.csv', 'w', encoding='UTF16') as f:
         csv_writer = writer(f)
         for line in errors:
-            csv_writer.writerow(line)
+            csv_writer.writerow([line])
 
     print("="*60)
     print('INFO: Search completed with ' + str(len(sents)) + ' potential quantifier + negations.')
-    print("\n")
     return quants, sents, indices
 
 def get_context(sentences, indices) -> str:
@@ -136,5 +146,6 @@ def get_context(sentences, indices) -> str:
     return "".join(ret)
 
 if __name__ == '__main__':
-    sentence = ["No! That isn't right."]
+    sentence = ["Everything in this society is not fair and equal"]
+    no_sentence = ["No! That isn't right."]
     print(find_quantifier_negation(sentence))
