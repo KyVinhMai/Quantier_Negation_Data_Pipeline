@@ -50,18 +50,19 @@ def dependency_exists(sentence: str, quant_segment: str):
     matches = dependency_matcher(doc)
 
     if matches:
-        match_id, token_ids = matches[0]
-        noun_subject_index = token_ids[1]
+        for match in matches: # Looks through all case of matches
+            match_id, token_ids = match
+            noun_subject_index = token_ids[1]
 
-        if debugging:
-                print("-"*36)
-                print(token_ids)
-                for i in range(len(token_ids)):
-                    print(dp.verb_pattern[i]["RIGHT_ID"] + ":", doc[token_ids[i]].text)
-                print("-" * 36)
+            if debugging:
+                    print("-"*36)
+                    print(token_ids)
+                    for i in range(len(token_ids)):
+                        print(dp.verb_pattern[i]["RIGHT_ID"] + ":", doc[token_ids[i]].text)
+                    print("-" * 36)
 
-        if doc[noun_subject_index].text in quant_segment:
-            return True
+            if doc[noun_subject_index].text in quant_segment:
+                return True
 
     return False
 
@@ -134,7 +135,7 @@ def find_quantifier_negation(sentences: list[str], quantifiers=("every", "some",
 def get_context(sentences, indices) -> str:
     ret = []
     for index in indices:
-        start = index - 3
+        start = index - 2
         end = index + 2
         if start <= 0:
             start = 0
@@ -142,10 +143,10 @@ def get_context(sentences, indices) -> str:
             end = len(sentences)
         for i in range(start, end):
             ret.append(sentences[i])
-        ret.append('**********')
+
     return "".join(ret)
 
 if __name__ == '__main__':
-    sentence = ["Everything in this society is not fair and equal"]
+    sentence = ["every one of these organizations who have endorsed you did not agree with everything you did or every word you've spoken"]
     no_sentence = ["No! That isn't right."]
     print(find_quantifier_negation(sentence))

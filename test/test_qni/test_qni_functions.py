@@ -31,7 +31,7 @@ class Every_Neg_Detectiontest(unittest.TestCase):
         except AssertionError:
             try:
                 for line in self.dataset:
-                    self.assertNotEqual(QNI.get_quantifier(line, self.quant), ([], [], []))
+                    self.assertEqual(QNI.is_quantifier_negation(line, self.quant), True)
             except AssertionError:
                 print(
                     f"AssertError Is Quantifier Negation: *Line {self.dataset.index(line)}* - {line}")
@@ -57,17 +57,18 @@ class No_Neg_Detectiontest(unittest.TestCase):
         except Exception as e:
             print(f"{e}, \n >>>>>>>Error occured at line {self.dataset.index(line)}: {line}")
 
-
     def test_detect_no_is_quantifier_negation_positives(self):
+        self.quant = ["no"]
+        self.dataset = quantifier_data_files["no_positives"]
         cases = [QNI.is_quantifier_negation(line, self.quant) for line in self.dataset]
         try:
-            self.assertEqual(len([quant for quant in cases if quant is not None]), 64)
+            self.assertEqual(len([quant for quant in cases if quant is True]), 64)
         except AssertionError:
             try:
                 for line in self.dataset:
-                    self.assertNotEqual(QNI.get_quantifier(line, self.quant), None)
+                    self.assertEqual(QNI.is_quantifier_negation(line, self.quant), True)
             except AssertionError:
-                print(f"AssertError Is Quantifier Negation: *Line {self.dataset.index(line)}* - {line}")
+                print(f"AssertError No Quantifier Negation: *Line {self.dataset.index(line)}* - {line}")
 
 
 class Any_Neg_Detectiontest(unittest.TestCase):

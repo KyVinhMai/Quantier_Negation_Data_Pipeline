@@ -1,4 +1,3 @@
-import tqdm
 import requests
 from csv import writer
 from bs4 import BeautifulSoup
@@ -10,6 +9,7 @@ spacy.prefer_gpu()
 import en_core_web_sm
 nlp = en_core_web_sm.load()
 
+articles = 0
 clauses = 0
 ID = 400
 header = ["ID", "Title", "Quant", "Match","Context", "Speakers", "Date", "Link"] #todo will add standalone vs continous
@@ -35,12 +35,13 @@ def segement_sentences(variable_amount: list[str]) -> list[str]:
     for group in variable_amount:
         doc = nlp(group)
         for line in doc.sents:
-            new_sentences.append(line.text)
+            new_sentences.append(" " + line.text)
 
     return new_sentences
 
 
 def validate_quant_neg(article_url: str) -> None:
+    global articles
     global ID
     global clauses #Cardinal Sins
 
@@ -66,6 +67,7 @@ def validate_quant_neg(article_url: str) -> None:
                 found_sentences.append([ID, title, quants[i], matches[i], context, "Ratatouie", date, article_url])
                 ID += 1
 
+        articles += 1
         clauses += count_clauses(sentences)
 
     #Custom except for finding no quantifier negations
@@ -95,7 +97,7 @@ def search_months(year_list: list):
         "We put link.a to get the descendent of <li>"
 
 def write_csv():
-    with open('NPR_quantneg_sentences.csv', 'w', newline='', encoding='UTF8') as f:
+    with open('../NPR_quantneg_sentences.csv', 'w', newline='', encoding='UTF8') as f:
         csv_writer = writer(f)
         csv_writer.writerow(header)
         for sent in found_sentences:
@@ -106,7 +108,7 @@ def main():
     # years = archive_container.find_all("div")[1:] #Remove year 2022 as it has no handwritten transcripts
     # search_months(years)
     links = []
-    with open("npr_links.txt", "r") as file:
+    with open("../npr_links.txt", "r") as file:
         for line in file:
             links.append(line.rstrip('\n'))
 

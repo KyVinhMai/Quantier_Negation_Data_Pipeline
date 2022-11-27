@@ -1,7 +1,7 @@
 aux_pattern = [
         {
             "RIGHT_ID": "anchor_aux",
-            "RIGHT_ATTRS": {"POS": "AUX"}
+            "RIGHT_ATTRS": {"POS": {"IN": ["AUX", "VERB"]}}
         },
         {
             "LEFT_ID": "anchor_aux",
@@ -15,13 +15,6 @@ aux_pattern = [
             "RIGHT_ID": "negation_particle",
             "RIGHT_ATTRS": {"DEP": "neg"},
         },
-        # {
-        #     "LEFT_ID": "anchor_is",
-        #     "REL_OP": ">",
-        #     "RIGHT_ID": "associated_word",
-        #     "RIGHT_ATTRS": {"DEP": {"IN": ["amod", "compound"]}},
-        # },
-
     ]
 
 verb_pattern = [
