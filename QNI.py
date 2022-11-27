@@ -66,10 +66,6 @@ def dependency_exists(sentence: str, quant_segment: str):
 
     return False
 
-
-def link_quantifier_to_dep():
-    pass
-
 def is_quantifier_negation(sentence: str, quantifiers: list[str]) -> bool:
     token, quantifier, neg_index, quant_text = get_quantifier(sentence, quantifiers)
     if token is None:
@@ -89,6 +85,7 @@ def is_standalone():
 
 def find_quantifier_negation(sentences: list[str], quantifiers=("every", "some", "all")):
     print('INFO: Beginning search for quantifier + negation statements.')
+    print("=" * 60)
     quants = []
     sents = []
     standalone = []
@@ -147,6 +144,6 @@ def get_context(sentences, indices) -> str:
     return "".join(ret)
 
 if __name__ == '__main__':
-    sentence = ["every one of these organizations who have endorsed you did not agree with everything you did or every word you've spoken"]
+    sentence = ["every one of those poor kids doesn't get the benefits that they have gotten before."]
     no_sentence = ["No! That isn't right."]
     print(find_quantifier_negation(sentence))

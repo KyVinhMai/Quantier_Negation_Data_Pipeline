@@ -41,25 +41,33 @@ verb_pattern = [
         "RIGHT_ATTRS": {"DEP": "neg", "POS": "PART"},
     }
 ]
+def of_pattern(quantifier: str) -> list[dict]:
+    of_pattern = [
+            {
+                "RIGHT_ID": "anchor",
+                "RIGHT_ATTRS": {}
+            },
+            {
+                "LEFT_ID": "anchor",
+                "REL_OP": ">",
+                "RIGHT_ID": "anchor_of",
+                "RIGHT_ATTRS": {"DEP": "prep"},
+            },
+            {
+                "LEFT_ID": "anchor_of",
+                "REL_OP": ">",
+                "RIGHT_ID": "noun_pronoun",
+                "RIGHT_ATTRS": {"DEP": "pobj"},
+            },
+            {
+                "LEFT_ID": "anchor",
+                "REL_OP": ">",
+                "RIGHT_ID": "anchor_quantifier",
+                "RIGHT_ATTRS": {"DEP": "det", "ORTH" : f"{quantifier}"},
+            }
+        ]
 
-of_pattern = [
-        {
-            "RIGHT_ID": "anchor",
-            "RIGHT_ATTRS": {}
-        },
-        {
-            "LEFT_ID": "anchor",
-            "REL_OP": ">",
-            "RIGHT_ID": "anchor_of",
-            "RIGHT_ATTRS": {"DEP": "prep"},
-        },
-        {
-            "LEFT_ID": "anchor_of",
-            "REL_OP": ">",
-            "RIGHT_ID": "noun_pronoun",
-            "RIGHT_ATTRS": {"DEP": "pobj"},
-        }
-    ]
+    return of_pattern
 
 def poss_pattern(orth: str) -> list[dict]:
     poss_pattern = [

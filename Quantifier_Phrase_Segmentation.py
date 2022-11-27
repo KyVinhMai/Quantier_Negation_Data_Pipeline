@@ -109,12 +109,12 @@ def is_quantifier_phrase(quantifier: str, doc: nlp):
         of "pbj" to it's children
     """
     dep_matcher = DependencyMatcher(nlp.vocab)
-    dep_matcher.add("quantifier_phrase", [dp.of_pattern])
+    dep_matcher.add("quantifier_phrase", [dp.of_pattern(quantifier)])
     matches = dep_matcher(doc)
     if matches:
         _, token_id = matches[0] #token id returns the indices of the anchors
-        phrase = doc[token_id[0]:token_id[-1] + 1].text #We want the span of the dependency
-        return phrase if quantifier in phrase else quantifier + " " + phrase
+        phrase = doc[token_id[-1]:token_id[2] + 1].text #We want the span of the dependency
+        return phrase
 
     return None
 
