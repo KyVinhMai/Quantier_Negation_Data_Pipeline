@@ -9,29 +9,23 @@ spacy.prefer_gpu()
 import en_core_web_sm
 nlp = en_core_web_sm.load()
 
-articles = 0
-clauses = 0
-ID = 400
 header = ["ID", "Title", "Quant", "Match","Context", "Speakers", "Date", "Link"] #todo will add standalone vs continous
 quant_count = {
     "every": 0,
-    "some":0,
-    "no":0
+    "some": 0,
+    "all": 0,
+    "any": 0
 }
 
 found_sentences = []
 
-quantifiers = ['every']
-
-
-
-hub_url = "https://www.npr.org/programs/all-things-considered/archive?date=12-31-2021"
-page = requests.get(hub_url)
-soup = BeautifulSoup(page.content, "html.parser")
+quantifiers = ['every', "any", "all", "some"]
 
 def segement_sentences(variable_amount: list[str]) -> list[str]:
+    """
+    Need to ensure that sentences are properly segmented
+    """
     new_sentences= []
-
     for group in variable_amount:
         doc = nlp(group)
         for line in doc.sents:
@@ -40,22 +34,27 @@ def segement_sentences(variable_amount: list[str]) -> list[str]:
     return new_sentences
 
 
-def validate_quant_neg(article_url: str) -> None:
-    global articles
-    global ID
-    global clauses #Cardinal Sins
+def validate_quant_neg(article_url: str, extract_transcript, extract_meta_data ) -> int:
+    """
+    article_url: actual url to website
+    extract_transcript: function
+    extract_meta_data: function
+    """
+    articles = 0
+    clauses = 0
+    ID = 400
 
     page = requests.get(article_url)
     soup = BeautifulSoup(page.content, "html.parser")
 
     try:
-        sentences = segement_sentences(npr.extract_transcript(soup))
+        sentences = segement_sentences(extract_transcript(soup))
 
         quants, matches, indices = qn.find_quantifier_negation(sentences, quantifiers)
         if matches:
             context = qn.get_context(sentences, indices)
             #todo grab audiofile
-            title, date = npr.extract_metadata(soup)
+            title, date = extract_meta_data(soup)
             print(f" + Found an Article '{title}' with {quants} \n")
 
             for i in range(len(quants)):
@@ -76,25 +75,7 @@ def validate_quant_neg(article_url: str) -> None:
         print("ARTICLE URL")
         print(article_url)
 
-
-def grab_day_links(month_link: str):
-    page = requests.get(month_link)
-    month = BeautifulSoup(page.content, "html.parser")
-    episode_list = month.find(id="episode-list")
-
-    for article in episode_list.find_all("article", {"class": "program-segment"}):
-        validate_quant_neg(article.find('a').get('href'))
-
-def search_months(year_list: list):
-    main_link = "https://www.npr.org/"
-    for year in year_list[:13]: #Ends at 2009
-
-        print(f"Going into year: {year}")
-
-        for link in year.find_all('li'):
-
-            grab_day_links(main_link + link.a.get("href"))
-        "We put link.a to get the descendent of <li>"
+    return clauses
 
 def write_csv():
     with open('../NPR_quantneg_sentences.csv', 'w', newline='', encoding='UTF8') as f:
@@ -103,24 +84,25 @@ def write_csv():
         for sent in found_sentences:
             csv_writer.writerow(sent)
 
-def main():
-    # archive_container = soup.find("nav", {"class": "archive-nav"})
-    # years = archive_container.find_all("div")[1:] #Remove year 2022 as it has no handwritten transcripts
-    # search_months(years)
+def main() -> int:
+    clauses = 0
     links = []
-    with open("../npr_links.txt", "r") as file:
+    with open("npr_links.txt", "r") as file:
         for line in file:
             links.append(line.rstrip('\n'))
 
     for link in links:
-        validate_quant_neg(link)
+        clauses = validate_quant_neg(link, npr.extract_transcript, npr.extract_metadata)
+
+    return clauses
 
 
 def crawl_NPR_archives():
+    clauses = 0
     try:
-        main()
+        clauses = main()
     except Exception as e:
-        print(e, ">>>>>>>>>>>>> Main function failed! <<<<<<<<<<<<<<<<<<<<<<")
+        print(e, ">>>>>>>>>>>>>>> Main function failed! <<<<<<<<<<<<<<<<<<<<<<")
         pass
 
     try:
@@ -133,8 +115,10 @@ def crawl_NPR_archives():
         --------------------------------------------------
         Every Counts: {quant_count['every']}
         Some Counts: {quant_count['some']}
+        Any Counts: {quant_count['any']}
+        All Counts: {quant_count['all']}
 
-        All sentences = {len(found_sentences)}
+        Total sentences = {len(found_sentences)}
         --------------------------------------------------
         In total, parsed through {clauses} clauses!
 
