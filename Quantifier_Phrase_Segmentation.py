@@ -147,7 +147,7 @@ def find_quantifier_category(token, quantifier: str,  doc: nlp) -> str or None:
         return is_quantifier_phrase(quantifier, doc)
 
 if __name__ == "__main__":
-    sentence2 = nlp("Nothing in this society makes sences")
+    sentence2 = nlp(" And not just the foldable, glove compartment variety, my living room wall features an enormous map of Europe and the poster of the famous New Yorker cover that shows Manhattan in close detail and everything west of it is")
     word = nlp("everything")[0]
     print(find_quantifier_category(word, "every", sentence2))
 

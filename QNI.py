@@ -17,13 +17,17 @@ def get_quantifier(sentence: str, quantifiers: list[str]) -> tuple[str, str] or 
     returns: token, quantifier, neg_idex,  quant_orth
     """
     def get_negation(sentence: str) -> int:
+        """
+        Splits the sentence in half up till the negation. Helps with computation and preventing QSI
+        from grabbing of multiple unintended quantifiers. Matches is [-1] to grab the latest negation.
+        """
         doc = nlp(sentence)
         neg_matcher = DependencyMatcher(nlp.vocab)
         neg_matcher.add("find neg particle", [dp.neg_pattern])
         matches = neg_matcher(doc)
 
         if matches:
-            match_id, token_ids = matches[0]
+            match_id, token_ids = matches[-1]
             return token_ids[0]
 
     doc = nlp(sentence)
@@ -144,6 +148,6 @@ def get_context(sentences, indices) -> str:
     return "".join(ret)
 
 if __name__ == '__main__':
-    sentence = ["every one of those poor kids doesn't get the benefits that they have gotten before."]
+    sentence = ["And right now, well, I have to begin with a confession: I love maps.", " And not just the foldable, glove compartment variety, my living room wall features an enormous map of Europe and the poster of the famous New Yorker cover that shows Manhattan in close detail and everything west of it isn't after thought. "]
     no_sentence = ["No! That isn't right."]
     print(find_quantifier_negation(sentence))
