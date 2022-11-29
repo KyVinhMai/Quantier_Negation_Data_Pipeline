@@ -87,7 +87,7 @@ def write_csv():
 def main() -> int:
     clauses = 0
     links = []
-    with open("npr_links.txt", "r") as file:
+    with open("hodge_podge_list.txt", "r") as file:
         for line in file:
             links.append(line.rstrip('\n'))
 
