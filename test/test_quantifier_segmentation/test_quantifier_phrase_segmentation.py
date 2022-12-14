@@ -27,8 +27,8 @@ class Test_Quantifier_Phrase_Segmentation(unittest.TestCase):
         cases = []
         try:
             for line in self.dataset:
-                token, quant, neg_index = QNI.get_quantifier(line, self.quant)
-                cases.append(str(QSP.find_quantifier_category(token,quant, nlp(line)[:neg_index])))
+                token, quant, neg_frag = QNI.get_quantifier(line, self.quant)
+                cases.append(str(QSP.find_quantifier_category(token, quant, neg_frag)))
         except Exception as e:
             print(e, line)
 

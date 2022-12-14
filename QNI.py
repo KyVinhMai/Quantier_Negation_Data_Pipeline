@@ -39,7 +39,7 @@ def get_quantifier(sentence: str, quantifiers: list[str]) -> tuple[str, str] or 
                 if neg_index:
                     quant_text = qps.find_quantifier_category(token, quantifier, doc[:neg_index])
                     if quant_text: #Get the splice of the sentence before negation
-                        return token, quantifier, neg_index, quant_text
+                        return token, quantifier, doc[:neg_index], quant_text
 
     return None, None, None, None
 
@@ -99,8 +99,8 @@ def find_quantifier_negation(sentences: list[str], quantifiers=("every", "some",
     for sentence in sentences:
         try:
             if is_quantifier_negation(sentence, quantifiers):
-                token, quant, neg_index, _ = get_quantifier(sentence, quantifiers)
-                quants.append(qps.find_quantifier_category(token, quant, nlp(sentence)[:neg_index])) #todo change into quantifier category
+                token, quant, neg_frag, _ = get_quantifier(sentence, quantifiers)
+                quants.append(qps.find_quantifier_category(token, quant, neg_frag)) #todo change into quantifier category
                 sents.append(sentence)
                 indices.append(i)
                 print(">>>>>> ", sentence, "<<<<<<<")
