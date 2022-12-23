@@ -64,7 +64,7 @@ def grab_month_links(month_link: str) -> set[str]:
     episode_list = month.find(id="episode-list")
 
     for article in episode_list.find_all("h2", {"class": "program-show__title"}):
-        time.sleep(5)
+        time.sleep(10)
         try:
             npr_links.update(grab_daylinks(article.find('a').get('href')))
             print("="*45)
@@ -74,7 +74,7 @@ def grab_month_links(month_link: str) -> set[str]:
             print("Connection refused by the server.. |DAY LINKS|")
             print("Let me sleep for 5 seconds")
             print("ZZzzzz...")
-            time.sleep(5)
+            time.sleep(20)
             print("Was a nice sleep, now let me continue...")
             continue
 
@@ -87,7 +87,7 @@ def search_months(year_list: list) -> set[str]:
         print(f"Going into year: {year}")
 
         for link in year.find_all('li'): #Find months
-            time.sleep(5)
+            time.sleep(20)
             try:
                 npr_links.update(grab_month_links(main_link + link.a.get("href")))
                 "We put link.a to get the descendent of <li>"
@@ -98,7 +98,7 @@ def search_months(year_list: list) -> set[str]:
                 print("Connection refused by the server.. |MONTH LINKS|")
                 print("Let me sleep for 5 seconds")
                 print("ZZzzzz...")
-                time.sleep(5)
+                time.sleep(20)
                 print("Was a nice sleep, now let me continue...")
                 continue
 
@@ -113,10 +113,16 @@ def main():
     """
     npr_links = search_months(years)
 
+    return npr_links
+
+def write_csv(npr_links: set[str]):
     with open('../NPR_scraped_links.csv', 'w', newline='', encoding='UTF8') as f:
         csv_writer = writer(f)
         for sent in npr_links:
-            csv_writer.writerow(sent)
+            csv_writer.writerow([sent])
 
 if __name__ == "__main__":
-    main()
+    npr_links = main()
+    write_csv(npr_links)
+    # npr_links = grab_month_links("https://www.npr.org/programs/all-things-considered/archive?date=12-31-2021")
+    # write_csv(npr_links)

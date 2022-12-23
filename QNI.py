@@ -89,7 +89,7 @@ def is_standalone():
 
 def find_quantifier_negation(sentences: list[str], quantifiers=("every", "some", "all")):
     print('INFO: Beginning search for quantifier + negation statements.')
-    print("=" * 60)
+    print("=" * 60, "\n")
     quants = []
     sents = []
     standalone = []
@@ -129,7 +129,7 @@ def find_quantifier_negation(sentences: list[str], quantifiers=("every", "some",
         for line in errors:
             csv_writer.writerow([line])
 
-    print("="*60)
+    print("\n", "="*60)
     print('INFO: Search completed with ' + str(len(sents)) + ' potential quantifier + negations.')
     return quants, sents, indices
 

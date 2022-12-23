@@ -84,23 +84,23 @@ def write_csv():
         for sent in found_sentences:
             csv_writer.writerow(sent)
 
-def main() -> int:
+def main(links: list[str]) -> int:
     clauses = 0
-    links = []
-    with open("hodge_podge_list.txt", "r") as file:
-        for line in file:
-            links.append(line.rstrip('\n'))
-
     for link in links:
         clauses = validate_quant_neg(link, npr.extract_transcript, npr.extract_metadata)
 
     return clauses
 
 
-def crawl_NPR_archives():
+def crawl_NPR_archives(file_name):
+    links = []
+    with open(file_name, "r") as file:
+        for line in file:
+            links.append(line.rstrip('\n'))
+
     clauses = 0
     try:
-        clauses = main()
+        clauses = main(links)
     except Exception as e:
         print(e, ">>>>>>>>>>>>>>> Main function failed! <<<<<<<<<<<<<<<<<<<<<<")
         pass
@@ -128,4 +128,4 @@ def crawl_NPR_archives():
     print("Webcrawler Complete!")
 
 if __name__ == "__main__":
-    crawl_NPR_archives()
+    crawl_NPR_archives("npr_links.txt")
