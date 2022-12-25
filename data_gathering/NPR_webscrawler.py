@@ -2,13 +2,15 @@ import selenium
 from csv import writer
 import time
 import requests
-import sys
+import tor_session as tor
 from bs4 import BeautifulSoup
 from selenium.webdriver.firefox.options import Options as options
 from selenium.webdriver.firefox.service import Service
 
+"TOR SESSION"
+session = tor.get_tor_session()
 hub_url = "https://www.npr.org/programs/all-things-considered/archive?date=12-31-2021"
-page = requests.get(hub_url)
+page = session.get(hub_url)
 soup = BeautifulSoup(page.content, "html.parser")
 
 #///////////////// Init binary & driver
@@ -43,28 +45,29 @@ def scroll(url: str):
 
     print("Scrolled all the way to the bottom!")
     page_source = driver.page_source
-    driver.quit()
 
     return page_source
 
 def grab_daylinks(day_link: str) -> set[str]:
     npr_links = set()
-    page = requests.get(day_link)
+    page = session.get(day_link)
     day = BeautifulSoup(page.content, "html.parser")
     for transcript in day.find_all("li", {"class": "audio-tool audio-tool-transcript"}):
         npr_links.add(transcript.find('a').get('href'))
 
     print(f" ++ Found {len(npr_links)} links from a day ++")
+    tor.renew_connection()
     return npr_links
 
 def grab_month_links(month_link: str) -> set[str]:
+    tor.renew_connection()
     npr_links = set()
     page_source = scroll(month_link) #Scroll all the way to the bottom before grabbing the links
     month = BeautifulSoup(page_source, "html.parser")
     episode_list = month.find(id="episode-list")
 
     for article in episode_list.find_all("h2", {"class": "program-show__title"}):
-        time.sleep(10)
+        time.sleep(20)
         try:
             npr_links.update(grab_daylinks(article.find('a').get('href')))
             print("="*45)
@@ -88,19 +91,11 @@ def search_months(year_list: list) -> set[str]:
 
         for link in year.find_all('li'): #Find months
             time.sleep(20)
-            try:
-                npr_links.update(grab_month_links(main_link + link.a.get("href")))
-                "We put link.a to get the descendent of <li>"
-                print("+"*45)
-                print("Grabbed a bunch of MONTH links!")
-                print("+"*45)
-            except requests.exceptions.ConnectionError as e:
-                print("Connection refused by the server.. |MONTH LINKS|")
-                print("Let me sleep for 5 seconds")
-                print("ZZzzzz...")
-                time.sleep(20)
-                print("Was a nice sleep, now let me continue...")
-                continue
+            npr_links.update(grab_month_links(main_link + link.a.get("href")))
+            "We put link.a to get the descendent of <li>"
+            print("+"*45)
+            print("Grabbed a bunch of MONTH links!")
+            print("+"*45)
 
     return npr_links
 
@@ -112,6 +107,7 @@ def main():
     Grabs all the years in archive
     """
     npr_links = search_months(years)
+    driver.quit() # Had to move driver here or else all connection is lost
 
     return npr_links
 
