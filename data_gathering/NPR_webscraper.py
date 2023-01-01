@@ -1,12 +1,21 @@
 import requests
 from bs4 import BeautifulSoup
 
+def move_audio_to_harddrive(ID, soup):
+    import os
+    audio_link = grab_audio_link(soup)
+    save_path = "D:\AmbiLab_data\Audio"
+    name = str(ID) + ".mp3"
+    with open(os.path.join(save_path, ID), "w") as file1:
+        file1.write(audio_link.content)
+
+
 def grab_audio_link(soup):
     """We can find the audio download button under wrapper > primary audio >
     audio-module-tools > audio-tool audio-tool-download ...."""
     audio_container = soup.find("li", class_ ="audio-tool audio-tool-download")
     attributes = audio_container.find("a")
-    print(attributes['href'])
+    return attributes['href']
 
 def extract_transcript(soup) -> list[str]:
     audio_tool_transcript = soup.find("li", class_="audio-tool audio-tool-transcript").a.get("href")

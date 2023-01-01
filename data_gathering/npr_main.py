@@ -7,17 +7,19 @@ from clause_counter import count_clauses
 import spacy
 spacy.prefer_gpu()
 import en_core_web_sm
+from functools import partial
+import sqlite3
 nlp = en_core_web_sm.load()
 
-header = ["ID", "Title", "Quant", "Match","Context", "Speakers", "Date", "Link"] #todo will add standalone vs continous
+conn = sqlite3.connect('AmbiLab_data.db')
+cursor = conn.cursor()
+
 quant_count = {
     "every": 0,
     "some": 0,
     "all": 0,
     "any": 0
 }
-
-found_sentences = []
 
 quantifiers = ['every', "any", "all", "some"]
 
@@ -53,8 +55,8 @@ def validate_quant_neg(article_url: str, extract_transcript, extract_meta_data )
         quants, matches, indices = qn.find_quantifier_negation(sentences, quantifiers)
         if matches:
             context = qn.get_context(sentences, indices)
-            #todo grab audiofile
             title, date = extract_meta_data(soup)
+            audio = npr.grab_audio_link(soup)
             print(f" + Found an Article '{title}' with {quants} \n")
 
             for i in range(len(quants)):
@@ -63,8 +65,17 @@ def validate_quant_neg(article_url: str, extract_transcript, extract_meta_data )
                     if quant in quants[i]:
                         quant_count[quant] += 1
 
-                found_sentences.append([ID, title, quants[i], matches[i], context, "Ratatouie", date, article_url])
+                #todo replace exception with exception duplicate.
+                try:
+                    found_sentences.append([ID, title, quants[i], matches[i], context, "Ratatouie", date, article_url])
+                except Exception:
+                    print("*"*60 + "\n", "Oop, duplicate already exists in QuantNeg Database\n", "*"*60 )
                 ID += 1
+
+        try:
+            found_sentences.append([ID, title, quants[i], matches[i], context, "Ratatouie", date, article_url])
+        except Exception:
+            print("*" * 60 + "\n", "Oop, duplicate already exists in Links Database\n", "*" * 60)
 
         articles += 1
         clauses += count_clauses(sentences)
@@ -77,18 +88,13 @@ def validate_quant_neg(article_url: str, extract_transcript, extract_meta_data )
 
     return clauses
 
-def write_csv():
-    with open('../NPR_quantneg_sentences.csv', 'w', newline='', encoding='UTF8') as f:
-        csv_writer = writer(f)
-        csv_writer.writerow(header)
-        for sent in found_sentences:
-            csv_writer.writerow(sent)
 
 def main(links: list[str]) -> int:
     clauses = 0
     for link in links:
         clauses = validate_quant_neg(link, npr.extract_transcript, npr.extract_metadata)
 
+    conn.commit()
     return clauses
 
 
@@ -104,11 +110,6 @@ def crawl_NPR_archives(file_name):
     except Exception as e:
         print(e, ">>>>>>>>>>>>>>> Main function failed! <<<<<<<<<<<<<<<<<<<<<<")
         pass
-
-    try:
-        write_csv()
-    except:
-        print("Shit whoops")
 
     presentation_stats = f"""
         Found Quantifiers

@@ -45,7 +45,7 @@ def get_quantifier(sentence: str, quantifiers: list[str]) -> tuple[str, str] or 
 
 def dependency_exists(sentence: str, quant_segment: str):
     doc = nlp(sentence)
-    debugging = False
+    debugging = True
 
     dependency_matcher = DependencyMatcher(nlp.vocab)
     dependency_matcher.add("find aux sentence type", [dp.aux_pattern])
