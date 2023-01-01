@@ -1,9 +1,9 @@
 import requests
-from csv import writer
 from bs4 import BeautifulSoup
 import QNI as qn
 import NPR_webscraper as npr
 from clause_counter import count_clauses
+import SQL_functions as sql
 import spacy
 spacy.prefer_gpu()
 import en_core_web_sm
@@ -13,6 +13,8 @@ nlp = en_core_web_sm.load()
 
 conn = sqlite3.connect('AmbiLab_data.db')
 cursor = conn.cursor()
+export_QN = partial(sql.export_QuantNeg, cursor)
+export_Links = partial(sql.export_Link, cursor)
 
 quant_count = {
     "every": 0,
@@ -35,6 +37,11 @@ def segement_sentences(variable_amount: list[str]) -> list[str]:
 
     return new_sentences
 
+def increment_quant_count(quants):
+    for i in range(len(quants)):
+        for quant in quant_count.keys():  # Adds to quant_count
+            if quant in quants[i]:
+                quant_count[quant] += 1
 
 def validate_quant_neg(article_url: str, extract_transcript, extract_meta_data ) -> int:
     """
@@ -50,30 +57,33 @@ def validate_quant_neg(article_url: str, extract_transcript, extract_meta_data )
     soup = BeautifulSoup(page.content, "html.parser")
 
     try:
+        """
+        After extracting sentences, check to see if there is a quantifier negation sentence.
+        If there is, by checking that match is not none, we then grab all the
+        necessacary data to insert its values into the sql database. There is a 
+        try and exception block just in case the sql function throws a duplicate
+        error.
+        """
         sentences = segement_sentences(extract_transcript(soup))
-
         quants, matches, indices = qn.find_quantifier_negation(sentences, quantifiers)
+        title, date = extract_meta_data(soup)
         if matches:
             context = qn.get_context(sentences, indices)
-            title, date = extract_meta_data(soup)
             audio = npr.grab_audio_link(soup)
             print(f" + Found an Article '{title}' with {quants} \n")
 
-            for i in range(len(quants)):
+            #todo replace exception with exception duplicate.
+            try:
+                for i in range(len(quants)):
+                    export_QN(ID, title, quants[i], matches[i], context, article_url, clauses, date, standalone)
+            except Exception:
+                print("*"*60 + "\n", "Oop, duplicate already exists in QuantNeg Database\n", "*"*60 )
 
-                for quant in quant_count.keys(): #Adds to quant_count
-                    if quant in quants[i]:
-                        quant_count[quant] += 1
-
-                #todo replace exception with exception duplicate.
-                try:
-                    found_sentences.append([ID, title, quants[i], matches[i], context, "Ratatouie", date, article_url])
-                except Exception:
-                    print("*"*60 + "\n", "Oop, duplicate already exists in QuantNeg Database\n", "*"*60 )
-                ID += 1
+            increment_quant_count(quants)
+            ID += 1
 
         try:
-            found_sentences.append([ID, title, quants[i], matches[i], context, "Ratatouie", date, article_url])
+            export_Links(article_url, title, quants[i], matches[i], context, "Ratatouie", date, article_url)
         except Exception:
             print("*" * 60 + "\n", "Oop, duplicate already exists in Links Database\n", "*" * 60)
 

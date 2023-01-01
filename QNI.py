@@ -90,19 +90,16 @@ def is_standalone():
 def find_quantifier_negation(sentences: list[str], quantifiers=("every", "some", "all")):
     print('INFO: Beginning search for quantifier + negation statements.')
     print("=" * 60, "\n")
-    quants = []
-    sents = []
-    standalone = []
+    quants = []; sents = []; standalone = []; indices = []; errors = []
     i = 0
-    indices = []
-    errors = []
     for sentence in sentences:
         try:
             if is_quantifier_negation(sentence, quantifiers):
-                token, quant, neg_frag, _ = get_quantifier(sentence, quantifiers)
-                quants.append(qps.find_quantifier_category(token, quant, neg_frag)) #todo change into quantifier category
+                token, quant, neg_fragment, _ = get_quantifier(sentence, quantifiers)
+                quants.append(qps.find_quantifier_category(token, quant, neg_fragment)) #todo change into quantifier category
                 sents.append(sentence)
                 indices.append(i)
+
                 print(">>>>>> ", sentence, "<<<<<<<")
                 # standalone.append("True" if is_standalone(sentence, quantifiers) else "False")
 
