@@ -84,7 +84,7 @@ def validate_quant_neg(transcript: list[str], quantifiers):
 
     return False
 
-def is_standalone():
+def is_standalone(sentence, quantifiers):
     pass
 
 def find_quantifier_negation(sentences: list[str], quantifiers=("every", "some", "all")):
@@ -98,10 +98,10 @@ def find_quantifier_negation(sentences: list[str], quantifiers=("every", "some",
                 token, quant, neg_fragment, _ = get_quantifier(sentence, quantifiers)
                 quants.append(qps.find_quantifier_category(token, quant, neg_fragment)) #todo change into quantifier category
                 sents.append(sentence)
+                # standalone.append("True" if is_standalone(sentence, quantifiers) else "False")
                 indices.append(i)
 
                 print(">>>>>> ", sentence, "<<<<<<<")
-                # standalone.append("True" if is_standalone(sentence, quantifiers) else "False")
 
             i = i+1
         except IndexError as e:
@@ -145,6 +145,6 @@ def get_context(sentences, indices) -> str:
     return "".join(ret)
 
 if __name__ == '__main__':
-    sentence = ["And right now, well, I have to begin with a confession: I love maps.", " And not just the foldable, glove compartment variety, my living room wall features an enormous map of Europe and the poster of the famous New Yorker cover that shows Manhattan in close detail and everything west of it isn't after thought. "]
+    sentence = ["And right now, well, I have to begin with a confession: I love maps.", " Because everybody who knew her and her kids thought she was highly devoted to them and can not conceive of her leaving her kids for any reason whatsoever. "]
     no_sentence = ["No! That isn't right."]
     print(find_quantifier_negation(sentence))
