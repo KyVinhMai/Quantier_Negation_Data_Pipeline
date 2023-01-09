@@ -43,6 +43,6 @@ if __name__ == "__main__":
     url2 = "https://www.npr.org/2006/05/04/5382507/iraq-veteran-writes-about-a-soldiers-fight"
     page = requests.get(url)
     soup = BeautifulSoup(page.content, "html.parser")
-    print(extract_transcript(soup))
+    print(grab_audio_link(soup))
 
 

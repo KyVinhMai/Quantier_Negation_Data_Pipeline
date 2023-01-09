@@ -1,9 +1,6 @@
 import whisper
+import pydub
 from localization_functions import localize_segment
-
-#Run on NULL items
-
-
 model = whisper.load_model()
 
 audio = whisper.load_audio()
@@ -14,7 +11,7 @@ _, probs = model.detect_language(mel)
 
 print(f"Detected language: {max(probs, key=probs.get)}")
 
-options = whisper.DecodingOptions()
+options = whisper.DecodingOptions(fp16 = False)
 result = whisper.decode(model, mel, options)
 
 print(result.text)

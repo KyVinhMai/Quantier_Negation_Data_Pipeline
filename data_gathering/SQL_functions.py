@@ -2,11 +2,11 @@
 Utilizes partial functions
 """
 
-def export_QuantNeg(cursor, Unique_ID:int, Title:str, Quant: str, Match:str,
-                         Context:str, Link:str, Clauses:int, Date:str, Standalone:str):
+def export_QuantNeg(cursor, Unique_ID:int, Quant: str, Match:str,
+                         Context:str, Title:str, Clauses:int, Link:str, Standalone:int):
 
-    cursor.execute('''INSERT INTO QuantNeg VALUES(?,?,?,?,?,?,?,?)''', (Unique_ID, Title,
-                         Quant, Match, Context, Link, Clauses, Date, Standalone))
+    cursor.execute('''INSERT INTO QuantNeg VALUES(?,?,?,?,?,?,?,?)''', (Unique_ID,
+                         Quant, Match, Context, Title, Clauses, Link, Standalone))
 
 
 def export_Link(cursor, Link:int, Show_type:str,

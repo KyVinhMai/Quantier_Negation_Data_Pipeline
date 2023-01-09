@@ -25,7 +25,7 @@ quant_count = {
 
 quantifiers = ['every', "any", "all", "some"]
 
-def segement_sentences(variable_amount: list[str]) -> list[str]:
+def segment_sentences(variable_amount: list[str]) -> list[str]:
     """
     Need to ensure that sentences are properly segmented
     """
@@ -60,35 +60,37 @@ def validate_quant_neg(article_url: str, extract_transcript, extract_meta_data )
         """
         After extracting sentences, check to see if there is a quantifier negation sentence.
         If there is, by checking that match is not none, we then grab all the
-        necessacary data to insert its values into the sql database. There is a 
+        necessary data to insert its values into the sql database. There is a 
         try and exception block just in case the sql function throws a duplicate
         error.
         """
-        sentences = segement_sentences(extract_transcript(soup))
+        sentences = segment_sentences(extract_transcript(soup))
         quants, matches, indices = qn.find_quantifier_negation(sentences, quantifiers)
         title, date = extract_meta_data(soup)
+        audio = npr.grab_audio_link(soup)
+        new_clauses = count_clauses(sentences)
+        clauses += new_clauses
+
+        try:
+            export_Links(article_url, Show_type, Transcript, Audio_dir, Audio_link, new_clauses)
+        except Exception:
+            print("*" * 60 + "\n", "Oop, duplicate already exists in Links Database\n", "*" * 60)
+
         if matches:
             context = qn.get_context(sentences, indices)
-            audio = npr.grab_audio_link(soup)
             print(f" + Found an Article '{title}' with {quants} \n")
 
             #todo replace exception with exception duplicate.
             try:
                 for i in range(len(quants)):
-                    export_QN(ID, title, quants[i], matches[i], context, article_url, clauses, date, standalone)
+                    export_QN(ID, quants[i], matches[i], context, title, article_url, clauses, date, standalone)
             except Exception:
                 print("*"*60 + "\n", "Oop, duplicate already exists in QuantNeg Database\n", "*"*60 )
 
             increment_quant_count(quants)
             ID += 1
 
-        try:
-            export_Links(article_url, title, quants[i], matches[i], context, "Ratatouie", date, article_url)
-        except Exception:
-            print("*" * 60 + "\n", "Oop, duplicate already exists in Links Database\n", "*" * 60)
-
         articles += 1
-        clauses += count_clauses(sentences)
 
     #Custom except for finding no quantifier negations
     except AttributeError:
