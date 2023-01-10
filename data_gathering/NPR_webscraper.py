@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+import string
 
 def move_audio_to_harddrive(ID, soup):
     import os
@@ -31,18 +32,18 @@ def extract_transcript(soup) -> list[str]:
 
     return sentences
 
-def extract_metadata(soup):
-    title = soup.find("div", class_ = 'storytitle').get_text().strip("\n")
+def extract_metadata(soup) -> str:
+    title = soup.find("div", class_ = 'storytitle').get_text().strip("\n").strip("< ").translate(str.maketrans('', '', string.punctuation))
     # todo add speakers
-    date = soup.find("span", attrs={"class":"date"}).text.strip().split('/')[0]
-    return title, date
+    # date = soup.find("span", attrs={"class":"date"}).text.strip().split('/')[0]
+    return title
 
 
 if __name__ == "__main__":
     url = "https://www.npr.org/2012/09/28/161974470/week-in-politics-u-n-general-assembly-debates"
-    url2 = "https://www.npr.org/2006/05/04/5382507/iraq-veteran-writes-about-a-soldiers-fight"
-    page = requests.get(url)
+    url2 = "https://www.npr.org/transcripts/1069538905"
+    page = requests.get(url2)
     soup = BeautifulSoup(page.content, "html.parser")
-    print(grab_audio_link(soup))
+    print(extract_metadata(soup))
 
 

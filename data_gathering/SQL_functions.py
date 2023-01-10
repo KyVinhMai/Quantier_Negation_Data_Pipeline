@@ -5,15 +5,12 @@ Utilizes partial functions
 def export_QuantNeg(cursor, Unique_ID:int, Quant: str, Match:str,
                          Context:str, Title:str, Clauses:int, Link:str, Standalone:int):
 
-    cursor.execute('''INSERT INTO QuantNeg VALUES(?,?,?,?,?,?,?,?)''', (Unique_ID,
+    cursor.execute('''INSERT INTO qn_sentences VALUES(?,?,?,?,?,?,?,?)''', (Unique_ID,
                          Quant, Match, Context, Title, Clauses, Link, Standalone))
 
 
-def export_Link(cursor, Link:int, Show_type:str,
-                         Transcript:str, Audio_dir:str, Audio_link:str, Clauses:int):
-
-    cursor.execute('''INSERT INTO Links VALUES(?,?,?,?,?,?)''', (Link, Show_type,
-                         Transcript, Audio_dir, Audio_link, Clauses))
+def export_Link(cursor, Link:str, Audio_dir:str, Clauses:int, Batch, Transcript:str):
+    cursor.execute('''INSERT INTO links VALUES(?,?,?,?,?)''', (Link, Audio_dir, Clauses, Batch, Transcript))
 
 
 def export_Audio(cursor, ID:int, Total_dur:float, match_dur:float,
@@ -25,5 +22,5 @@ def export_Audio(cursor, ID:int, Total_dur:float, match_dur:float,
 
 def get_last_ID(cursor) -> int:
     "Gets last ID in the list"
-    num = cursor.execute('''SELECT from *  QuantNeg ''')
+    num = cursor.execute('''SELECT * FROM links ORDER BY batches DESC LIMIT 1;''')
     return num

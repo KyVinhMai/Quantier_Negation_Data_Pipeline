@@ -10,9 +10,10 @@ import en_core_web_sm
 from functools import partial
 import sqlite3
 import os.path
+import argparse
 nlp = en_core_web_sm.load()
 
-conn = sqlite3.connect('AmbiLab_data.db')
+conn = sqlite3.connect(r'C:\Users\kyvin\PycharmProjects\quant_neg_data.db')
 cursor = conn.cursor()
 export_QN = partial(sql.export_QuantNeg, cursor)
 export_Links = partial(sql.export_Link, cursor)
@@ -44,23 +45,6 @@ def increment_quant_count(quants):
             if quant in quants[i]:
                 quant_count[quant] += 1
 
-def write_audio_to_dir(ID, soup):
-    """
-    https://www.codingem.com/python-download-file-from-url/
-    https://stackoverflow.com/questions/8024248/telling-python-to-save-a-txt-file-to-a-certain-directory-on-windows-and-mac
-    """
-    audio_link = npr.grab_audio_link(soup)
-    response = requests.get(audio_link)
-    save_path = 'D:\AmbiLab_data\Audio'
-    name_of_file = ID + "_All"
-    completeName = os.path.join(save_path, name_of_file + ".mp3")
-    file1 = open(completeName, "wb")
-    file1.write(response.content)
-    file1.close()
-
-    return save_path + name_of_file + ".mp3"
-
-
 def validate_quant_neg(article_url: str, extract_transcript, extract_meta_data, ID: int) -> int:
     """
     article_url: actual url to website
@@ -83,31 +67,40 @@ def validate_quant_neg(article_url: str, extract_transcript, extract_meta_data, 
         """
         sentences = segment_sentences(extract_transcript(soup))
         json_document = nlp("".join(sentences)).to_json()
-        quants, matches, indices = qn.find_quantifier_negation(sentences, quantifiers)
-        title, date = extract_meta_data(soup)
+        title = extract_meta_data(soup)
         audio_dir = write_audio_to_dir(ID, soup)
         new_clauses = count_clauses(sentences)
         clauses += new_clauses
 
         try:
-            export_Links(article_url, Show_type, json_document, audio_dir, new_clauses)
-        except Exception:
-            print("*" * 60 + "\n", "Oop, duplicate already exists in Links Database\n", "*" * 60)
+            export_Links(article_url, json_document, audio_dir, new_clauses)
+        except sqlite3.Error as er:
+                print("_" * 40)
+                print("Article ~ link db:", title)
+                print("@", (' '.join(er.args)), "@")
+                print("_" * 40)
 
+        quants, matches, indices = qn.find_quantifier_negation(sentences, quantifiers)
         if matches:
+            #Add standalone function model
             context = qn.get_context(sentences, indices)
             print(f" + Found an Article '{title}' with {quants} \n")
 
             #todo replace exception with exception duplicate.
             try:
                 for i in range(len(quants)):
-                    export_QN(ID, quants[i], matches[i], context, title, article_url, clauses, standalone)
-            except Exception:
-                print("*"*60 + "\n", "Oop, duplicate already exists in QuantNeg Database\n", "*"*60 )
+                    export_QN(ID, quants[i], matches[i], context, title, article_url, clauses, "NONE")
+                    conn.commit()
+            except sqlite3.Error as er:
+                print("_" * 40)
+                print("Article ~ qn_sentences db:", title)
+                print("@", (' '.join(er.args)), "@")
+                print("_" * 40)
 
             increment_quant_count(quants)
             ID += 1
 
+        conn.commit()
         articles += 1
 
     #Custom except for finding no quantifier negations
@@ -125,7 +118,7 @@ def main(links: list[str]) -> int:
     for link in links:
         clauses = validate_quant_neg(link, npr.extract_transcript, npr.extract_metadata, ID)
 
-    conn.commit()
+    conn.close()
     return clauses
 
 
