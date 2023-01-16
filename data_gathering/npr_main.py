@@ -66,19 +66,10 @@ def validate_quant_neg(article_url: str, extract_transcript, extract_meta_data, 
         error.
         """
         sentences = segment_sentences(extract_transcript(soup))
-        json_document = nlp("".join(sentences)).to_json()
         title = extract_meta_data(soup)
         audio_dir = write_audio_to_dir(ID, soup)
         new_clauses = count_clauses(sentences)
         clauses += new_clauses
-
-        try:
-            export_Links(article_url, json_document, audio_dir, new_clauses)
-        except sqlite3.Error as er:
-                print("_" * 40)
-                print("Article ~ link db:", title)
-                print("@", (' '.join(er.args)), "@")
-                print("_" * 40)
 
         quants, matches, indices = qn.find_quantifier_negation(sentences, quantifiers)
         if matches:

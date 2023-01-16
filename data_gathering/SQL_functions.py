@@ -19,6 +19,8 @@ def export_Audio(cursor, ID:int, Total_dur:float, match_dur:float,
     cursor.execute('''INSERT INTO Audio VALUES(?,?,?,?,?,?)''', (ID, Total_dur, match_dur, full_dur,
                          match_dir, full_dir, max_pitch, min_pitch))
 
+def grab_latest_batch():
+    pass
 
 def get_last_ID(cursor) -> int:
     "Gets last ID in the list"

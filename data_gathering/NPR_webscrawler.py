@@ -60,7 +60,7 @@ def scroll(url: str):
 
     return page_source
 
-def write_audio_to_dir(title:str, soup) -> str:
+def audio_to_dir(title:str, soup) -> str:
     """
     https://www.codingem.com/python-download-file-from-url/
     https://stackoverflow.com/questions/8024248/telling-python-to-save-a-txt-file-to-a-certain-directory-on-windows-and-mac
@@ -68,39 +68,53 @@ def write_audio_to_dir(title:str, soup) -> str:
     audio_link = npr.grab_audio_link(soup)
     response = requests.get(audio_link)
     save_path = 'D:\AmbiLab_data\Audio\\'
-    truncated_title = "_".join(title.split(" "))
-    name_of_file = truncated_title + "_All"
+    name_of_file = "_".join(title.split(" "))
     completeName = os.path.join(save_path, name_of_file + ".mp3")
     file1 = open(completeName, "wb")
     file1.write(response.content)
     file1.close()
 
-    return save_path + name_of_file + ".mp3"
+    return completeName
+
+def text_to_dir(title, transcript) -> str:
+    save_path = 'D:\AmbiLab_data\\text\\'
+    name_of_file = "_".join(title.split(" "))
+    completeName = os.path.join(save_path, name_of_file + ".txt")
+    file1 = open(completeName, "w")
+    file1.write(str(transcript.to_json()))
+    file1.close()
+
+    return completeName
 
 def grab_daylinks(day_link: str):
     num_of_links = 0
     page = session.get(day_link)
     day = BeautifulSoup(page.content, "html.parser")
     for transcript_page in day.find_all("li", {"class": "audio-tool audio-tool-transcript"}):
-        link = transcript_page.find('a').get('href')
-        page = session.get(link)
-        article_soup = BeautifulSoup(page.content, "html.parser")
-
-        transcript = nlp("".join(npr.extract_transcript(article_soup)))
-        title = npr.extract_metadata(article_soup)
-        audio_dir = write_audio_to_dir(title, article_soup)
-        clauses = doc_count_clauses(transcript)
         try:
-            sql.export_Link(cursor, link, audio_dir, clauses, "batch_1", transcript.to_bytes())
-            conn.commit()
-            print("~", title)
-        except sqlite3.Error as er:
-            print("_" * 40)
-            print("Article ~ link db:", title)
-            print("@", (' '.join(er.args)), "@")
-            print("_" * 40)
+            link = transcript_page.find('a').get('href')
+            page = session.get(link)
+            article_soup = BeautifulSoup(page.content, "html.parser")
 
-        num_of_links += 1
+            transcript = nlp("".join(npr.extract_transcript(article_soup)))
+            title = npr.extract_metadata(article_soup)
+            transcript_dir = text_to_dir(title, transcript)
+            audio_dir = audio_to_dir(title, article_soup)
+            clauses = doc_count_clauses(transcript)
+            try:
+                sql.export_Link(cursor, link, audio_dir, clauses, "batch_1", transcript_dir)
+                conn.commit()
+                print("~", title)
+            except sqlite3.Error as er:
+                print("_" * 40)
+                print("Article ~ link db:", title)
+                print("@", (' '.join(er.args)), "@")
+                print("_" * 40)
+
+            num_of_links += 1
+        except Exception as e:
+            print("Article Error:", e)
+            pass
 
     print(f" ++ Found {num_of_links} links from a day ++")
     tor.renew_connection()

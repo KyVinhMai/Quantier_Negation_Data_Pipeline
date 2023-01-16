@@ -41,9 +41,9 @@ def extract_metadata(soup) -> str:
 
 if __name__ == "__main__":
     url = "https://www.npr.org/2012/09/28/161974470/week-in-politics-u-n-general-assembly-debates"
-    url2 = "https://www.npr.org/transcripts/1069538905"
+    url2 = "https://www.npr.org/transcripts/1120355459"
     page = requests.get(url2)
     soup = BeautifulSoup(page.content, "html.parser")
-    print(extract_metadata(soup))
+    print(extract_transcript(soup))
 
 
