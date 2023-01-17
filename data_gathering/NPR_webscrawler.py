@@ -16,7 +16,7 @@ from selenium.webdriver.firefox.options import Options as options
 from selenium.webdriver.firefox.service import Service
 
 "SQL Database"
-conn = sqlite3.connect(r'C:\Users\kyvin\PycharmProjects\QuantNeg_Webcrawler\data_gathering\quant_neg_data.db')
+conn = sqlite3.connect(r'D:\AmbiLab_data\quant_neg_data.db')
 cursor = conn.cursor()
 
 "TOR SESSION"
@@ -76,20 +76,18 @@ def audio_to_dir(title:str, soup) -> str:
 
     return completeName
 
-def text_to_dir(title, transcript) -> str:
-    save_path = 'D:\AmbiLab_data\\text\\'
-    name_of_file = "_".join(title.split(" "))
-    completeName = os.path.join(save_path, name_of_file + ".txt")
-    file1 = open(completeName, "w")
-    file1.write(str(transcript.to_json()))
-    file1.close()
-
-    return completeName
+def write_errors(errors: list):
+    import csv
+    with open('errors.csv', 'w') as file:
+        writer = csv.writer(file)
+        for i in errors:
+            writer.writerow([i])
 
 def grab_daylinks(day_link: str):
     num_of_links = 0
     page = session.get(day_link)
     day = BeautifulSoup(page.content, "html.parser")
+    errors = []
     for transcript_page in day.find_all("li", {"class": "audio-tool audio-tool-transcript"}):
         try:
             link = transcript_page.find('a').get('href')
@@ -98,25 +96,29 @@ def grab_daylinks(day_link: str):
 
             transcript = nlp("".join(npr.extract_transcript(article_soup)))
             title = npr.extract_metadata(article_soup)
-            transcript_dir = text_to_dir(title, transcript)
             audio_dir = audio_to_dir(title, article_soup)
             clauses = doc_count_clauses(transcript)
+            #todo implement latest batch
+
             try:
-                sql.export_Link(cursor, link, audio_dir, clauses, "batch_1", transcript_dir)
+                sql.export_Link(cursor, link, audio_dir, clauses, str(transcript.to_json()), 1)
                 conn.commit()
                 print("~", title)
             except sqlite3.Error as er:
                 print("_" * 40)
                 print("Article ~ link db:", title)
-                print("@", (' '.join(er.args)), "@")
+                print("@ SQL", (' '.join(er.args)), "@")
                 print("_" * 40)
 
             num_of_links += 1
         except Exception as e:
-            print("Article Error:", e)
-            pass
+            print("!ERROR!", link,"\n", e)
+            errors.append((link,e))
 
     print(f" ++ Found {num_of_links} links from a day ++")
+
+    if len(errors) == 0:
+        write_errors(errors)
     tor.renew_connection()
 
 def grab_month_links(month_link: str):
@@ -166,5 +168,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # npr_links = grab_month_links("https://www.npr.org/programs/all-things-considered/archive?date=12-31-2021")
-    # write_csv(npr_links)

@@ -2,8 +2,9 @@ import requests
 from bs4 import BeautifulSoup
 import QNI as qn
 import NPR_webscraper as npr
-from clause_counter import count_clauses
 import SQL_functions as sql
+import json
+from spacy.tokens import Doc
 import spacy
 spacy.prefer_gpu()
 import en_core_web_sm
@@ -13,74 +14,44 @@ import os.path
 import argparse
 nlp = en_core_web_sm.load()
 
-conn = sqlite3.connect(r'C:\Users\kyvin\PycharmProjects\quant_neg_data.db')
+conn = sqlite3.connect(r'D:\AmbiLab_data\quant_neg_data.db')
 cursor = conn.cursor()
 export_QN = partial(sql.export_QuantNeg, cursor)
-export_Links = partial(sql.export_Link, cursor)
-
-quant_count = {
-    "every": 0,
-    "some": 0,
-    "all": 0,
-    "any": 0
-}
 
 quantifiers = ['every', "any", "all", "some"]
 
-def segment_sentences(variable_amount: list[str]) -> list[str]:
-    """
-    Need to ensure that sentences are properly segmented
-    """
-    new_sentences= []
-    for group in variable_amount:
-        doc = nlp(group)
-        for line in doc.sents:
-            new_sentences.append(" " + line.text)
+link_table_keys = {
+    "link": [0],
+    "audio_dir": [1],
+    "clauses": [2],
+    "transcript":[3],
+    "batches":[4]
+}
 
-    return new_sentences
-
-def increment_quant_count(quants):
-    for i in range(len(quants)):
-        for quant in quant_count.keys():  # Adds to quant_count
-            if quant in quants[i]:
-                quant_count[quant] += 1
-
-def validate_quant_neg(article_url: str, extract_transcript, extract_meta_data, ID: int) -> int:
+def validate_quant_neg(link_row: str, extract_meta_data, ID: int):
     """
     article_url: actual url to website
     extract_transcript: function
     extract_meta_data: function
     """
-    articles = 0
-    clauses = 0
+    article_url = link_row[0], clauses = link_row[2], doc_json = json.loads(link_row[3])
 
     page = requests.get(article_url)
     soup = BeautifulSoup(page.content, "html.parser")
 
     try:
-        """
-        After extracting sentences, check to see if there is a quantifier negation sentence.
-        If there is, by checking that match is not none, we then grab all the
-        necessary data to insert its values into the sql database. There is a 
-        try and exception block just in case the sql function throws a duplicate
-        error.
-        """
-        sentences = segment_sentences(extract_transcript(soup))
+        transcript = Doc(nlp.vocab).from_json(doc_json)
+        sentences = [sentence.text for sentence in transcript.sents]
         title = extract_meta_data(soup)
-        audio_dir = write_audio_to_dir(ID, soup)
-        new_clauses = count_clauses(sentences)
-        clauses += new_clauses
 
-        quants, matches, indices = qn.find_quantifier_negation(sentences, quantifiers)
+        quants, matches, indices = qn.find_quantifier_negation(sentences, quantifiers) #todo remove all text
         if matches:
-            #Add standalone function model
             context = qn.get_context(sentences, indices)
             print(f" + Found an Article '{title}' with {quants} \n")
 
-            #todo replace exception with exception duplicate.
             try:
                 for i in range(len(quants)):
-                    export_QN(ID, quants[i], matches[i], context, title, article_url, clauses, "NONE")
+                    export_QN(ID, quants[i], matches[i], context, title, clauses, article_url, "NONE")
                     conn.commit()
             except sqlite3.Error as er:
                 print("_" * 40)
@@ -88,11 +59,7 @@ def validate_quant_neg(article_url: str, extract_transcript, extract_meta_data, 
                 print("@", (' '.join(er.args)), "@")
                 print("_" * 40)
 
-            increment_quant_count(quants)
             ID += 1
-
-        conn.commit()
-        articles += 1
 
     #Custom except for finding no quantifier negations
     except AttributeError:
@@ -100,48 +67,25 @@ def validate_quant_neg(article_url: str, extract_transcript, extract_meta_data, 
         print("ARTICLE URL")
         print(article_url)
 
-    return clauses
 
+def main(data_iter: iter):
+    ID = sql.QN_last_ID(cursor)
+    if ID == None:
+        ID = 400
 
-def main(links: list[str]) -> int:
-    clauses = 0
-    ID = 400
-    for link in links:
-        clauses = validate_quant_neg(link, npr.extract_transcript, npr.extract_metadata, ID)
+    for link in data_iter:
+        validate_quant_neg(link, npr.extract_metadata, ID)
 
     conn.close()
-    return clauses
 
 
-def crawl_NPR_archives(file_name):
-    links = []
-    with open(file_name, "r") as file:
-        for line in file:
-            links.append(line.rstrip('\n'))
-
-    clauses = 0
+def crawl_NPR_archives(batch_num):
     try:
-        clauses = main(links)
+        main(sql.select_batch(cursor, batch_num))
     except Exception as e:
         print(e, ">>>>>>>>>>>>>>> Main function failed! <<<<<<<<<<<<<<<<<<<<<<")
-        pass
 
-    presentation_stats = f"""
-        Found Quantifiers
-        --------------------------------------------------
-        Every Counts: {quant_count['every']}
-        Some Counts: {quant_count['some']}
-        Any Counts: {quant_count['any']}
-        All Counts: {quant_count['all']}
-
-        Total sentences = {len(found_sentences)}
-        --------------------------------------------------
-        In total, parsed through {clauses} clauses!
-
-        """
-
-    print(presentation_stats)
-    print("Webcrawler Complete!")
+    print("Quantifier-Negation Extraction Complete!")
 
 if __name__ == "__main__":
-    crawl_NPR_archives("npr_links.txt")
+    crawl_NPR_archives(1) #<---------------------- Insert batch num

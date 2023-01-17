@@ -10,7 +10,6 @@ def move_audio_to_harddrive(ID, soup):
     with open(os.path.join(save_path, ID), "w") as file1:
         file1.write(audio_link.content)
 
-
 def grab_audio_link(soup):
     """We can find the audio download button under wrapper > primary audio >
     audio-module-tools > audio-tool audio-tool-download ...."""
@@ -41,9 +40,9 @@ def extract_metadata(soup) -> str:
 
 if __name__ == "__main__":
     url = "https://www.npr.org/2012/09/28/161974470/week-in-politics-u-n-general-assembly-debates"
-    url2 = "https://www.npr.org/transcripts/1120355459"
+    url2 = "https://www.npr.org/transcripts/1109051830"
     page = requests.get(url2)
     soup = BeautifulSoup(page.content, "html.parser")
-    print(extract_transcript(soup))
+    print(grab_audio_link(soup))
 
 
