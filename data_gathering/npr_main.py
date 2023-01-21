@@ -34,12 +34,13 @@ def validate_quant_neg(link_row: str, extract_meta_data, ID: int):
     extract_transcript: function
     extract_meta_data: function
     """
-    article_url = link_row[0], clauses = link_row[2], doc_json = json.loads(link_row[3])
+    article_url = link_row[0]; clauses = link_row[2]; doc_json = eval(link_row[3])
 
     page = requests.get(article_url)
     soup = BeautifulSoup(page.content, "html.parser")
 
     try:
+        print(f"- Reading {article_url}")
         transcript = Doc(nlp.vocab).from_json(doc_json)
         sentences = [sentence.text for sentence in transcript.sents]
         title = extract_meta_data(soup)
@@ -48,10 +49,10 @@ def validate_quant_neg(link_row: str, extract_meta_data, ID: int):
         if matches:
             context = qn.get_context(sentences, indices)
             print(f" + Found an Article '{title}' with {quants} \n")
-
             try:
                 for i in range(len(quants)):
-                    export_QN(ID, quants[i], matches[i], context, title, clauses, article_url, "NONE")
+                    export_QN(ID, quants[i], "NONE", context, title, clauses, article_url, "NONE", matches[i])
+                    ID += 1
                     conn.commit()
             except sqlite3.Error as er:
                 print("_" * 40)
@@ -59,33 +60,36 @@ def validate_quant_neg(link_row: str, extract_meta_data, ID: int):
                 print("@", (' '.join(er.args)), "@")
                 print("_" * 40)
 
-            ID += 1
-
     #Custom except for finding no quantifier negations
     except AttributeError:
         print('Issue with')
         print("ARTICLE URL")
         print(article_url)
 
+    return ID
 
-def main(data_iter: iter):
+def main():
+    data_iter = iter([row for row in sql.select_batch(cursor, conn, batch_num="1")])
     ID = sql.QN_last_ID(cursor)
     if ID == None:
         ID = 400
+    else:
+        ID = ID[0]
 
+    articles = 0
     for link in data_iter:
-        validate_quant_neg(link, npr.extract_metadata, ID)
+        ID = validate_quant_neg(link, npr.extract_metadata, ID)
+        articles += 1
 
-    conn.close()
+    print(f"Read {articles} articles!")
+
 
 
 def crawl_NPR_archives(batch_num):
-    try:
-        main(sql.select_batch(cursor, batch_num))
-    except Exception as e:
-        print(e, ">>>>>>>>>>>>>>> Main function failed! <<<<<<<<<<<<<<<<<<<<<<")
-
+    # main(sql.select_batch(cursor, conn, batch_num))
+    # main()
+    main()
     print("Quantifier-Negation Extraction Complete!")
 
 if __name__ == "__main__":
-    crawl_NPR_archives(1) #<---------------------- Insert batch num
+    crawl_NPR_archives("1") #<---------------------- Insert batch num

@@ -142,7 +142,7 @@ def get_context(sentences, indices) -> str:
         for i in range(start, end):
             ret.append(sentences[i])
 
-    return "".join(ret)
+    return " ".join(ret)
 
 if __name__ == '__main__':
     sentence = ["And right now, well, I have to begin with a confession: I love maps.", " Because everybody who knew her and her kids thought she was highly devoted to them and can not conceive of her leaving her kids for any reason whatsoever. "]
