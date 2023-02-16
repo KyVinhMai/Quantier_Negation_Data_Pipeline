@@ -28,6 +28,7 @@ soup = BeautifulSoup(page.content, "html.parser")
 #///////////////// Init binary & driver
 new_driver_path = r'C:\Users\kyvin\SeleniumDrivers\geckodriver.exe'
 new_binary_path = r'C:\Program Files\Mozilla Firefox\firefox.exe'
+headers = {"User-Agent":'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36'}
 
 ops = options()
 ops.add_argument('--disable-blink-features=AutomationControlled') #https://stackoverflow.com/questions/71885891/urllib3-exceptions-maxretryerror-httpconnectionpoolhost-localhost-port-5958
@@ -66,7 +67,7 @@ def audio_to_dir(title:str, soup) -> str:
     https://stackoverflow.com/questions/8024248/telling-python-to-save-a-txt-file-to-a-certain-directory-on-windows-and-mac
     """
     audio_link = npr.grab_audio_link(soup)
-    response = requests.get(audio_link)
+    response = requests.get(audio_link, headers=headers)
     save_path = 'D:\AmbiLab_data\Audio\\'
     name_of_file = "_".join(title.split(" "))
     completeName = os.path.join(save_path, name_of_file + ".mp3")
@@ -101,7 +102,7 @@ def grab_daylinks(day_link: str):
             #todo implement latest batch
 
             try:
-                sql.export_Link(cursor, link, audio_dir, clauses, str(transcript.to_json()), 1)
+                sql.export_Link(cursor, link, audio_dir, clauses, str(transcript.to_json()), 1, page)
                 conn.commit()
                 print("~", title)
             except sqlite3.Error as er:

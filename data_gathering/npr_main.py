@@ -3,8 +3,8 @@ from bs4 import BeautifulSoup
 import QNI as qn
 import NPR_webscraper as npr
 import SQL_functions as sql
-import json
 from spacy.tokens import Doc
+import asyncio
 import spacy
 spacy.prefer_gpu()
 import en_core_web_sm
@@ -34,10 +34,8 @@ def validate_quant_neg(link_row: str, extract_meta_data, ID: int):
     extract_transcript: function
     extract_meta_data: function
     """
-    article_url = link_row[0]; clauses = link_row[2]; doc_json = eval(link_row[3])
-
-    page = requests.get(article_url)
-    soup = BeautifulSoup(page.content, "html.parser")
+    article_url = link_row[0]; clauses = link_row[2]; doc_json = eval(link_row[3]); html = link_row[-1]
+    soup = BeautifulSoup(html, "html.parser")
 
     try:
         print(f"- Reading {article_url}")

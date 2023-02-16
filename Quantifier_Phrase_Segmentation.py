@@ -28,6 +28,9 @@ def is_quantifier_word(token, quantifier: str) -> str or None:
     if token.text.lower() == quantifier + "where":
         return token.text
 
+    if token.text.lower() == quantifier and token.pos_ == "PRON":
+        return token.text
+
     return None
 
 def find_index(token, doc: nlp) -> int or None:

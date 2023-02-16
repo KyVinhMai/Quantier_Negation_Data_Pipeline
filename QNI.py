@@ -45,7 +45,7 @@ def get_quantifier(sentence: str, quantifiers: list[str]) -> tuple[str, str] or 
 
 def dependency_exists(sentence: str, quant_segment: str):
     doc = nlp(sentence)
-    debugging = True
+    debugging = False
 
     dependency_matcher = DependencyMatcher(nlp.vocab)
     dependency_matcher.add("find aux sentence type", [dp.aux_pattern])
@@ -147,4 +147,6 @@ def get_context(sentences, indices) -> str:
 if __name__ == '__main__':
     sentence = ["And right now, well, I have to begin with a confession: I love maps.", " Because everybody who knew her and her kids thought she was highly devoted to them and can not conceive of her leaving her kids for any reason whatsoever. "]
     no_sentence = ["No! That isn't right."]
-    print(find_quantifier_negation(sentence))
+    some_sentence = ['some of us might not notice']
+    print(find_quantifier_negation(some_sentence))
+
