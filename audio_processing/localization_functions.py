@@ -1,61 +1,46 @@
-import sqlite3
 from pydub import AudioSegment
-import spacy
-from mutagen.mp3 import MP3
-from spacy.tokens import Doc
-import math
-import en_core_web_sm
-nlp = en_core_web_sm.load()
+from minimum_word_distance import minimum_word_length
 
-# conn = sqlite3.connect(r'D:\AmbiLab_data\quant_neg_data.db')
-# cursor = conn.cursor()
 
-def query_data(cursor) -> iter:
-    table_data = cursor.execute('''SELECT transcript, utterance, context FROM links INNER JOIN qn_sentences qs ON links.link = qs.url;''')
-    table_data = iter([line for line in table_data])
-    return table_data
+def process_text(sentence) -> [str]:
+    sentence = sentence.replace(",", "").replace(".", "")
+    sentence = sentence.lower()
+    return sentence.split()
 
-def write_audio(trimmed_audio: AudioSegment, audio_dir:str) -> str:
+
+def return_time_stamps(utterance: str, raw_result: dict) -> tuple[float,float]:
+    """
+    raw_result[segments] = list of dictionaries
+    segment["text"]
+
+    Ex.  {'
+    id': 3,
+    'seek': 0,
+    'start': 20.56,
+    'end': 28.16,
+    'text': " City, the average rent is over $2,000. Vanessa and her mom also face other barriers, like credit's",
+    'tokens': [4392, 11, 264, 4274, 6214, 307, 670, 1848, 17, 11, 1360, 13, 27928, 293, 720, 1225, 611, 1851, 661, 13565, 11, 411, 5397, 311],
+    'temperature': 0.0,
+    'avg_logprob': -0.17815227336711711,
+    'compression_ratio': 1.628099173553719,
+    'no_speech_prob': 0.06631708890199661
+    }
+    """
+    first_word = utterance.lower().split()[0]
+    for segment in raw_result["segments"]:
+        if first_word in segment["text"].lower():
+            if minimum_word_length(process_text(segment['text']), process_text(utterance), first_word):
+                return segment["start"] * 1000, segment["end"] * 1000
+
+def extract_sentence(start:float, end:float, half_audio_name = "npr_evictions.mp3") -> AudioSegment:
+    audio_file = AudioSegment.from_wav(half_audio_name) #todo change
+    sentence_audio = audio_file[start:end]
+    return sentence_audio
+
+def write_trimmed_audio(trimmed_audio: AudioSegment, audio_dir:str) -> str:
+    """
+    Writes audio file. Returns file name
+    """
     title = audio_dir.split("\\")[-1].split(".")[0] + "_trimmed" + ".wav"
     trimmed_audio.export(title, format="wav")#todo check for wav
     return title
-
-def segment_audio(audio_len: int, segment) -> int:
-    """
-    Splits the audio in different halves depending on where the sentence is located
-    """
-    if segment == 1:
-        new_length = math.floor(audio_len / 2)
-    else:
-        new_length = audio_len - math.floor(audio_len / 2)
-
-    return new_length
-
-def split_audio(audio_dir:str, segment: int) -> AudioSegment:
-    import os
-    audio_len = math.floor(MP3(audio_dir).info.length)
-    new_length = segment_audio(audio_len, segment)
-
-    os.chdir("C:\\Users\\kyvin\\PycharmProjects\\QuantNeg_Webcrawler\\audio_processing")
-    audio_file = AudioSegment.from_mp3("npr_addiction.mp3") #todo change
-    "if segment is 0, take the first half, else take the 2nd half"
-    trimmed_audio =  audio_file[new_length:] if segment == 1 else audio_file[:new_length] #todo check if this correct
-
-    return trimmed_audio
-
-def localize_segment(row: tuple[str, str, str], utterance) -> int:
-    """
-    Finds if the utterance is in the first half of the audio by searching through
-    the document
-    """
-    doc_file = Doc(nlp.vocab).from_json(eval(row[0]))
-    sentences = list(doc_file.sents)
-    transcript_len = len(sentences)
-    avg = math.floor(transcript_len / 2)
-    index = sentences.index(utterance)
-
-    return 2 if index > avg else 1
-
-if __name__ == "__main__":
-    audio = MP3("test_file.mp3")
-    print(audio.info.length)

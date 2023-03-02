@@ -27,9 +27,11 @@ def extract_transcript(soup) -> list[str]:
     transcript_soup = BeautifulSoup(page.content, "html.parser")
 
     text_container = transcript_soup.find(class_ = "transcript storytext")
-    text_tags = text_container.find_all("p")[:-2] # Last two lines are just disclaimers and copyright
+    "Index 1 removes the sentence summary, Index -2 removes the disclaimers"
+    text_tags = text_container.find_all("p")[1:-2]
     sentences = []
     for lines in text_tags:
+        print(lines.text)
         sentences.append(lines.text)
 
     return sentences
@@ -42,9 +44,14 @@ def extract_metadata(soup) -> str:
 
 
 if __name__ == "__main__":
-    url = "https://www.npr.org/transcripts/141908779"
+    import spacy
+    import en_core_web_sm
+    spacy.prefer_gpu()
+    nlp = en_core_web_sm.load()
+
+    url = "https://www.npr.org/transcripts/1069273127"
     page = requests.get(url)
     soup = BeautifulSoup(page.content, "html.parser")
-    print(extract_transcript(soup))
+    print([str(sent) for sent in nlp("".join(extract_transcript(soup))).sents])
 
 
