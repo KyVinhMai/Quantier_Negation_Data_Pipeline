@@ -20,18 +20,12 @@ def grab_audio_link(soup):
     attributes = audio_container.find("a")
     return attributes['href']
 
-def extract_transcript(soup) -> list[str]:
-    audio_tool_transcript = soup.find("li", class_="audio-tool audio-tool-transcript").a.get("href")
-
-    page = requests.get(audio_tool_transcript, headers = headers)
-    transcript_soup = BeautifulSoup(page.content, "html.parser")
-
-    text_container = transcript_soup.find(class_ = "transcript storytext")
+def extract_transcript(article_soup: BeautifulSoup) -> list[str]:
+    text_container = article_soup.find(class_ = "transcript storytext")
     "Index 1 removes the sentence summary, Index -2 removes the disclaimers"
     text_tags = text_container.find_all("p")[1:-2]
     sentences = []
     for lines in text_tags:
-        print(lines.text)
         sentences.append(lines.text)
 
     return sentences
@@ -44,14 +38,18 @@ def extract_metadata(soup) -> str:
 
 
 if __name__ == "__main__":
-    import spacy
-    import en_core_web_sm
-    spacy.prefer_gpu()
-    nlp = en_core_web_sm.load()
+    # import spacy
+    # import en_core_web_sm
+    # spacy.prefer_gpu()
+    # nlp = en_core_web_sm.load()
 
-    url = "https://www.npr.org/transcripts/1069273127"
+    # url = "https://www.npr.org/transcripts/1069273127"
+    url = "https://www.npr.org/2018/12/31/681286858/encore-the-history-of-government-shutdowns-in-the-u-s"
     page = requests.get(url)
     soup = BeautifulSoup(page.content, "html.parser")
-    print([str(sent) for sent in nlp("".join(extract_transcript(soup))).sents])
+
+    print(extract_metadata(soup))
+
+    # print([str(sent) for sent in nlp("".join(extract_transcript(soup))).sents])
 
 

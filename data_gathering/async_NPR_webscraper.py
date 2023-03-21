@@ -54,7 +54,7 @@ def grab_daylinks(day_link: str):
     for transcript_page in day.find_all("li", {"class": "audio-tool audio-tool-transcript"}):
         try:
             link = transcript_page.find('a').get('href')
-            page = session.get(link, headers = headers)
+            page = session.get(link, headers=headers)
             article_soup = BeautifulSoup(page.content, "html.parser")
 
             transcript = nlp("".join(npr.extract_transcript(article_soup)))
@@ -85,7 +85,7 @@ def grab_daylinks(day_link: str):
     tor.renew_connection()
 
 def grab_episode_list_links(month_link: str):
-    page = session.get(month_link, headers = headers)
+    page = session.get(month_link, headers = headers) # <-- await asyncio.gather_tasks()
     month_soup = BeautifulSoup(page.content, "html.parser")
     episode_list = month_soup.find(id="episode-list")
 
@@ -111,12 +111,23 @@ def new_scroll_link(month_soup) -> str:
     return sl
 
 def get_scroll_links(scroll_link):
-        main_link = "https://www.npr.org/"
-        while("2009" not in scroll_link):
-            time.sleep(20)
-            month_soup = grab_episode_list_links(scroll_link)
-            scroll_link = main_link + new_scroll_link(month_soup)
-            print(">Created new scroll link", {scroll_link})
+    """
+    The central hub the web crawler. Due to NPR's archive website, we need to
+    sequentially grab the scroll link which allows us to progress to the next
+    section of links.
+
+    Hence the main goal of the while loop is to continously grab the next
+    scroll link, but the subgoal is processing that year. We use
+    asyncio.create_task() to push the processing of the html data to the
+    background... so that the loop can continue get the next scroll link
+    without interruption.
+    """
+    main_link = "https://www.npr.org/"
+    while("2009" not in scroll_link):
+        time.sleep(20)
+        month_soup = grab_episode_list_links(scroll_link) # <-- creates task
+        scroll_link = main_link + new_scroll_link(month_soup)
+        print(">Created new scroll link: ", {scroll_link})
 
 def main():
     "Under <main>, <section id = main-section>"

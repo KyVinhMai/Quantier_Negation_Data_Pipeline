@@ -10,7 +10,8 @@ model = whisper.load_model('base')
 def main():
     table_data = lf.query_data(cursor)
     for row in table_data:
-        audio_dir = row[1]; utterance = row[2]; context = row[3]
+        #audio_dir, transcript, quant, utterance, context
+        audio_dir = row[0]; transcript = row[1], quant = row[2]; utterance = row[3]; context = row[4]
         segment = lf.localize_segment(row, utterance)
         trimmed_audio = lf.split_audio(audio_dir, segment)
         trim_file_name = lf.write_audio(trimmed_audio, audio_dir)

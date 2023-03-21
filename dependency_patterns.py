@@ -1,7 +1,7 @@
 """
 Please refer to https://universaldependencies.org/  to understand the
 theory behind dependencies and https://spacy.io/api/dependencymatcher to
-understand how spacy implements dependencies
+understand how spacy implements such dependencies
 
 These patterns are used across the Quantifier Phrase Segmentation
 And QNI files

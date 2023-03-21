@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import requests
+from pathlib import Path
 import torch
 import torchaudio
 import wave
@@ -15,20 +16,6 @@ print(device)
 bundle = torchaudio.pipelines.WAV2VEC2_ASR_BASE_960H
 model = bundle.get_model().to(device)
 labels = bundle.get_labels()
-with torch.inference_mode():
-    waveform, _ = torchaudio.load(SPEECH_FILE)
-    emissions, _ = model(waveform.to(device))
-    emissions = torch.log_softmax(emissions, dim=-1)
-
-emission = emissions[0].cpu().detach()
-
-transcript = "FINANCIAL|HELP|IS|AVAILABLE|BUT|MAYBE|SOMEBODY|DOESN'T|APPLY|OR|THE|ASSISSTANCE|NEVER|COMES|THROUGH"
-
-dictionary = {c: i for i, c in enumerate(labels)}
-
-tokens = [dictionary[c] for c in transcript]
-print(list(zip(transcript, tokens)))
-
 
 def get_trellis(emission, tokens, blank_id=0):
     num_frame = emission.size(0)
@@ -47,10 +34,6 @@ def get_trellis(emission, tokens, blank_id=0):
             trellis[t, :-1] + emission[t, tokens],
         )
     return trellis
-
-
-trellis = get_trellis(emission, tokens)
-
 
 @dataclass
 class Point:
@@ -94,9 +77,6 @@ def backtrack(trellis, emission, tokens, blank_id=0):
         raise ValueError("Failed to align")
     return path[::-1]
 
-
-path = backtrack(trellis, emission, tokens)
-
 # Merge the labels
 @dataclass
 class Segment:
@@ -113,7 +93,7 @@ class Segment:
         return self.end - self.start
 
 
-def merge_repeats(path):
+def merge_repeats(path, transcript):
     i1, i2 = 0, 0
     segments = []
     while i1 < len(path):
@@ -132,8 +112,6 @@ def merge_repeats(path):
     return segments
 
 
-segments = merge_repeats(path)
-
 # Merge words
 def merge_words(segments, separator="|"):
     words = []
@@ -151,7 +129,52 @@ def merge_words(segments, separator="|"):
             i2 += 1
     return words
 
-word_segments = merge_words(segments)
 
-def force_align(speech_file, transcript):
-    pass
+def force_align(SPEECH_FILE: Path, transcript: str, quantifier_phrase: str) -> None:
+    """
+    Transcript should be formatted with dividers
+    """
+    with torch.inference_mode():
+        waveform, _ = torchaudio.load(SPEECH_FILE)
+        emissions, _ = model(waveform.to(device))
+        emissions = torch.log_softmax(emissions, dim=-1)
+    emission  = emissions[0].cpu().detach
+
+    dictionary = {c: i for i, c in enumerate(labels)}
+    tokens = [dictionary[c] for c in transcript]
+
+    trellis = get_trellis(emission, tokens)
+    path = backtrack(trellis, emission, tokens)
+
+    segments = merge_repeats(path, transcript)
+
+    word_segments = merge_words(segments)
+
+    print("Found Word Segments")
+    print("=" * 36)
+    """
+    Splicing the audio from the quantifier to the end of the sentence.
+    Once the word matches the first word of the quantifier phrase,
+    ensure the neighboring words correct as well
+    
+    
+    some - somethings
+    """
+    found = True #Likely inefficient
+    for index, word in enumerate(word_segments):
+        if not found:
+            break
+
+        if word.label == quantifier_phrase[0]:
+            for i in range(1, len(quantifier_phrase)):
+                if word_segments[index+i] != quantifier_phrase[i]:
+                    found = False
+                    break
+
+    if found:
+        pass
+
+
+
+
+
