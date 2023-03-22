@@ -24,7 +24,9 @@ agent = {"User-Agent":'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (K
 "Logging Configuration"
 logging.basicConfig(
     level=logging.INFO,
-    format = "%(levelname)s %(messages)s"
+    format = "%(asctime)s - %(levelname)s %(messages)s",
+    filename= "nprwebcrawler_issues.log",
+    filemode= "w"
 )
 
 async def audio_to_dir(session, title:str, soup: BeautifulSoup) -> str:
@@ -55,7 +57,7 @@ async def gather_episodes(session: ClientSession, day_link: BeautifulSoup) -> li
             tasks.append((link, article_soup))
             print("~", link)
         except Exception as e:
-            print("ERROR: in grabbing episode", link, "\n", e)
+            logging.exception(f"Error in collecting episode link: {link} ")
 
     return tasks
 
@@ -65,7 +67,6 @@ async def grab_day_catalogue_links(session: ClientSession, day_catalogue: str):
     html = await response.text()
     day = BeautifulSoup(html, "html.parser")
 
-    errors = []
     soups = await gather_episodes(session, day)
 
     for link, article_soup in soups: #todo turn into iterator
@@ -80,17 +81,18 @@ async def grab_day_catalogue_links(session: ClientSession, day_catalogue: str):
             try:
                 sql.export_Link(cursor, link, audio_dir, clauses, str(transcript.to_json()), 1, str(article_soup))
                 conn.commit()
-                print("~", title)
+                print("> Exported:", title)
             except sqlite3.Error as er:
-                print("_" * 40)
-                print("Article ~ link db:", title)
-                print("@ SQL", (' '.join(er.args)), "@")
-                print("_" * 40)
-
+                logging.error(
+                f"""{'_'*40}
+                Article ~ link db: {title}
+                SQL {(' '.join(er.args))}
+                {'_'*40}"""
+                )
             num_of_links += 1
+
         except Exception as e:
-            print("!ERROR!", link,"\n", e)
-            errors.append((link, e))
+            logging.critical("Attempt to process episode data failed!", exc_info=True)
 
     print(f"INFO: ++ Found {num_of_links} links from a day ++")
 
@@ -106,7 +108,7 @@ async def collect_section_list_links(month_link: str, session: ClientSession) ->
                 day_links = article.find('a').get('href')
                 tasks.append(asyncio.create_task(grab_day_catalogue_links(session, day_links)))
             except requests.exceptions.ConnectionError as e:
-                print("Connection refused by the server.. |DAY LINKS|")
+                logging.error(f"Connection refused by the server")
                 continue
 
         return tasks
@@ -150,7 +152,7 @@ async def get_scroll_links(scroll_link):
                 html = await response.text()
                 month_soup = BeautifulSoup(html, "html.parser")
                 scroll_link = main_link + new_scroll_link(month_soup)
-                print("> Created new scroll link! ", {scroll_link})
+                print("INFO: Created new scroll link! ", {scroll_link})
 
         await asyncio.gather(*main_tasks)
 
@@ -163,6 +165,7 @@ def main():
 
     end = time.time()
     total_time = end - start
+    logging.info(f"TIME: {total_time}")
     print("It took {} seconds to complete the NPR webcrawler".format(total_time))
     print('You did it!')
 

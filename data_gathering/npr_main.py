@@ -1,24 +1,32 @@
-import requests
 from bs4 import BeautifulSoup
-import QNI as qn
+import QNI as qni
 import NPR_webscraper as npr
 import SQL_functions as sql
 from spacy.tokens import Doc
-import asyncio
 import spacy
 spacy.prefer_gpu()
 import en_core_web_sm
 from functools import partial
 import sqlite3
+import logging
 import os.path
 import argparse
 nlp = en_core_web_sm.load()
 
+"SQL Database"
 conn = sqlite3.connect(r'D:\AmbiLab_data\quant_neg_data.db')
 cursor = conn.cursor()
 export_QN = partial(sql.export_QuantNeg, cursor)
 
-quantifiers = ['every', "any", "all", "some"]
+"Logging Configuration"
+logging.basicConfig(
+    level=logging.INFO,
+    format = "%(asctime)s - %(levelname)s %(messages)s",
+    filename= "dependency_matching.log",
+    filemode= "w"
+)
+
+quantifiers = ['every', "any", "all", "some"] #todo clean this up
 
 link_table_keys = {
     "link": [0],
@@ -43,9 +51,9 @@ def validate_quant_neg(link_row: str, extract_meta_data, ID: int):
         sentences = [sentence.text for sentence in transcript.sents]
         title = extract_meta_data(soup)
 
-        quants, matches, indices = qn.find_quantifier_negation(sentences, quantifiers) #todo remove all text
+        quants, matches, indices = qni.find_quantifier_negation(sentences, quantifiers) #todo remove all text
         if matches:
-            context = qn.get_context(sentences, indices)
+            context = qni.get_context(sentences, indices)
             print(f" + Found an Article '{title}' with {quants} \n")
             try:
                 for i in range(len(quants)):
@@ -53,16 +61,17 @@ def validate_quant_neg(link_row: str, extract_meta_data, ID: int):
                     ID += 1
                     conn.commit()
             except sqlite3.Error as er:
-                print("_" * 40)
-                print("Article ~ qn_sentences db:", title)
-                print("@", (' '.join(er.args)), "@")
-                print("_" * 40)
+                logging.error(
+                f"""{'_'*40}
+                Article ~ qn_sentences db: {title}
+                SQL {(' '.join(er.args))}
+                {'_'*40}""",
+                    exc_info=True
+                )
 
     #Custom except for finding no quantifier negations
     except AttributeError:
-        print('Issue with')
-        print("ARTICLE URL")
-        print(article_url)
+        logging.error(f"Issue with article: {article_url}")
 
     return ID
 
@@ -80,7 +89,6 @@ def main():
         articles += 1
 
     print(f"Read {articles} articles!")
-
 
 
 def crawl_NPR_archives(batch_num):

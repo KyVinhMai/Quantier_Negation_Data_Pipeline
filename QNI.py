@@ -92,21 +92,21 @@ def find_quantifier_negation(sentences: list[str], quantifiers=("every", "some",
     print("=" * 60, "\n")
     quants = []; sents = []; standalone = []; indices = []; errors = []
     i = 0
-    for sentence in sentences:
+    for candidate in sentences:
         try:
-            if is_quantifier_negation(sentence, quantifiers):
-                token, quant, neg_fragment, _ = get_quantifier(sentence, quantifiers)
+            if is_quantifier_negation(candidate, quantifiers):
+                token, quant, neg_fragment, _ = get_quantifier(candidate, quantifiers)
                 quants.append(qps.find_quantifier_category(token, quant, neg_fragment)) #todo change into quantifier category
-                sents.append(sentence)
+                sents.append(candidate)
                 # standalone.append("True" if is_standalone(sentence, quantifiers) else "False")
                 indices.append(i)
 
-                print(">>>>>> ", sentence, "<<<<<<<")
+                print(">>>>>> ", candidate, "<<<<<<<")
 
             i = i+1
         except IndexError as e:
-            print("QNI Error with", sentence)
-            errors.append(f"{sentence} + {e}")
+            print("QNI Error with", candidate)
+            errors.append(f"{candidate} + {e}")
             print(e)
 
         # if is_quantifier_negation(sentence, quantifiers):

@@ -5,8 +5,6 @@ understand how spacy implements such dependencies
 
 These patterns are used across the Quantifier Phrase Segmentation
 And QNI files
-
-
 """
 
 aux_pattern = [
