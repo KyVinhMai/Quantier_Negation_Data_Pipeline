@@ -1,8 +1,8 @@
 import time
+import logging
 import asyncio
 import requests
 from aiohttp import ClientSession
-import aiofiles
 import sqlite3
 import spacy
 import os.path
@@ -18,13 +18,22 @@ nlp = en_core_web_sm.load()
 conn = sqlite3.connect(r'D:\AmbiLab_data\quant_neg_data.db')
 cursor = conn.cursor()
 
+"User Agent"
+agent = {"User-Agent":'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36'}
+
+"Logging Configuration"
+logging.basicConfig(
+    level=logging.INFO,
+    format = "%(levelname)s %(messages)s"
+)
+
 async def audio_to_dir(session, title:str, soup: BeautifulSoup) -> str:
     """
     https://www.codingem.com/python-download-file-from-url/
     https://stackoverflow.com/questions/8024248/telling-python-to-save-a-txt-file-to-a-certain-directory-on-windows-and-mac
     """
     audio_link = npr.grab_audio_link(soup)
-    response = await session.get(audio_link)
+    response = await session.get(audio_link, headers=agent)
     save_path = 'D:\AmbiLab_data\Audio\\'
     name_of_file = "_".join(title.split(" "))
     completeName = os.path.join(save_path, name_of_file + ".mp3")
@@ -34,20 +43,13 @@ async def audio_to_dir(session, title:str, soup: BeautifulSoup) -> str:
 
     return completeName
 
-def write_errors(errors: list):
-    import csv
-    with open('errors.csv', 'w') as file:
-        writer = csv.writer(file)
-        for i in errors:
-            writer.writerow([i])
-
 async def gather_episodes(session: ClientSession, day_link: BeautifulSoup) -> list[tuple[str, BeautifulSoup]]:
     "Collects each episode transcript that was released in the associated day"
     tasks = []
     for episode_transcript in day_link.find_all("h3", {"class": "rundown-segment__title"}):
         link = episode_transcript.find('a').get('href')
         try:
-            response = await session.get(link)
+            response = await session.get(link, headers=agent)
             html = await response.text()
             article_soup = BeautifulSoup(html, "html.parser")
             tasks.append((link, article_soup))
@@ -57,16 +59,16 @@ async def gather_episodes(session: ClientSession, day_link: BeautifulSoup) -> li
 
     return tasks
 
-async def grab_day_catalogue_links(session: ClientSession, day_link: str):
+async def grab_day_catalogue_links(session: ClientSession, day_catalogue: str):
     num_of_links = 0
-    response = await session.get(day_link)
+    response = await session.get(day_catalogue, headers=agent)
     html = await response.text()
     day = BeautifulSoup(html, "html.parser")
 
     errors = []
     soups = await gather_episodes(session, day)
 
-    for link, article_soup in soups:
+    for link, article_soup in soups: #todo turn into iterator
         try:
             transcript = nlp("".join(npr.extract_transcript(article_soup)))
             title = npr.extract_metadata(article_soup)
@@ -76,7 +78,7 @@ async def grab_day_catalogue_links(session: ClientSession, day_link: str):
             #todo implement latest batch
 
             try:
-                sql.export_Link(cursor, day_link, audio_dir, clauses, str(transcript.to_json()), 1, str(article_soup))
+                sql.export_Link(cursor, link, audio_dir, clauses, str(transcript.to_json()), 1, str(article_soup))
                 conn.commit()
                 print("~", title)
             except sqlite3.Error as er:
@@ -92,9 +94,6 @@ async def grab_day_catalogue_links(session: ClientSession, day_link: str):
 
     print(f"INFO: ++ Found {num_of_links} links from a day ++")
 
-    if len(errors) != 0:
-        write_errors(errors)
-
 async def collect_section_list_links(month_link: str, session: ClientSession) -> BeautifulSoup:
     """
     Each scroll link leads to another section of the month catalogue.
@@ -106,16 +105,13 @@ async def collect_section_list_links(month_link: str, session: ClientSession) ->
             try:
                 day_links = article.find('a').get('href')
                 tasks.append(asyncio.create_task(grab_day_catalogue_links(session, day_links)))
-                # print("=" * 45)
-                # print("Grabbed a bunch of day links!")
-                # print("=" * 45)
             except requests.exceptions.ConnectionError as e:
                 print("Connection refused by the server.. |DAY LINKS|")
                 continue
 
         return tasks
 
-    response = await session.get(month_link)
+    response = await session.get(month_link, headers=agent)
     html = await response.text()
     month_soup = BeautifulSoup(html, "html.parser")
     episode_list = month_soup.find(id="episode-list")
@@ -150,7 +146,7 @@ async def get_scroll_links(scroll_link):
                 main_tasks.append(asyncio.create_task(collect_section_list_links(scroll_link, session)))
 
                 "Getting the scroll link will occur in parallel"
-                response = await session.get(scroll_link)
+                response = await session.get(scroll_link, headers=agent)
                 html = await response.text()
                 month_soup = BeautifulSoup(html, "html.parser")
                 scroll_link = main_link + new_scroll_link(month_soup)
