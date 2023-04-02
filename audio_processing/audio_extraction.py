@@ -1,7 +1,7 @@
 import sqlite3
 import whisper
-import pydub
-import preprocessing_functions as lf
+from audio_processing.utils import preprocessing_functions as lf
+
 conn = sqlite3.connect(r'D:\AmbiLab_data\quant_neg_data.db')
 cursor = conn.cursor()
 model = whisper.load_model('base')

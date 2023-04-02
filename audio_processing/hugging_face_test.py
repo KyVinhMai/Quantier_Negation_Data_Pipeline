@@ -1,9 +1,10 @@
 import sqlite3
 import torch
 from transformers import pipeline
-import pydub
+
 device = 0 if torch.cuda.is_available() else "cpu"
-import preprocessing_functions as pf
+from audio_processing.utils import preprocessing_functions as pf
+
 conn = sqlite3.connect(r'D:\AmbiLab_data\quant_neg_data.db')
 cursor = conn.cursor()
 

@@ -1,10 +1,7 @@
 from dataclasses import dataclass
-import requests
 from pathlib import Path
 import torch
 import torchaudio
-import wave
-import audioop
 
 torch.random.manual_seed(0)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -128,7 +125,6 @@ def merge_words(segments, separator="|"):
         else:
             i2 += 1
     return words
-
 
 def force_align(SPEECH_FILE: Path, transcript: str, quantifier_phrase: str) -> None:
     """

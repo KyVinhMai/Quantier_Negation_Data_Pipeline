@@ -4,6 +4,7 @@ from mutagen.mp3 import MP3
 from spacy.tokens import Doc
 import math
 import en_core_web_sm
+import re
 nlp = en_core_web_sm.load()
 
 # conn = sqlite3.connect(r'D:\AmbiLab_data\quant_neg_data.db')
@@ -52,6 +53,22 @@ def localize_segment(row: tuple[str, str, str], utterance) -> int:
     index = sentences.index(utterance)
 
     return 2 if index > avg else 1
+
+def transform_transcript(utterance:str, quant:str) -> tuple[str, int]:
+    """
+    The wav2vec model requires transcripts to be uppercase and have
+    vertical lines between each word.
+
+    Ex: FINANCIAL|HELP|IS|AVAILABLE
+
+    The function also returns the location of the quantifier
+    """
+    utterance_list = re.sub(r'[!|?|.|,|[|]|]', '', utterance).split(" ")
+    index = utterance_list.index(quant)
+    transcript = "|".join([word.upper() for word in utterance_list])
+
+    return transcript, index
+
 
 if __name__ == "__main__":
     audio = MP3("test_file.mp3")
