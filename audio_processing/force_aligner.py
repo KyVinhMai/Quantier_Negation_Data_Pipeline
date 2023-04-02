@@ -89,6 +89,10 @@ class Segment:
     def length(self):
         return self.end - self.start
 
+    @property
+    def attributes(self):
+        return (float(f"{self.start:5d}"), float(f"{self.end:5d}"))
+
 
 def merge_repeats(path, transcript):
     i1, i2 = 0, 0
@@ -126,7 +130,13 @@ def merge_words(segments, separator="|"):
             i2 += 1
     return words
 
-def force_align(SPEECH_FILE: Path, transcript: str, quantifier_phrase: str) -> None:
+    return found
+
+def fa_return_timestamps(word_segments, i:int) -> tuple[float, float]:
+    word = word_segments[i]
+    return word.attributes
+
+def force_align(SPEECH_FILE: Path, transcript: str, index:int) -> tuple[float, float]:
     """
     Transcript should be formatted with dividers
     """
@@ -134,7 +144,7 @@ def force_align(SPEECH_FILE: Path, transcript: str, quantifier_phrase: str) -> N
         waveform, _ = torchaudio.load(SPEECH_FILE)
         emissions, _ = model(waveform.to(device))
         emissions = torch.log_softmax(emissions, dim=-1)
-    emission  = emissions[0].cpu().detach
+    emission = emissions[0].cpu().detach
 
     dictionary = {c: i for i, c in enumerate(labels)}
     tokens = [dictionary[c] for c in transcript]
@@ -156,20 +166,35 @@ def force_align(SPEECH_FILE: Path, transcript: str, quantifier_phrase: str) -> N
     
     some - somethings
     """
-    found = True #Likely inefficient
+    # if check_alignment(quantifier_phrase, word_segments):
+    #     index = quantifier_phrase.index(quant)
+    #     match = word_segments[index:]
+    #     "We just need the time start of the quantifier word"
+    #     start = fa_return_timestamps(waveform, trellis, match, 0)[0]
+    #     # end = fa_return_timestamps(waveform, trellis, match, -1)[-1]
+    #     return start
+
+    start = fa_return_timestamps(waveform, trellis, word_segments, index)[0]
+    end = fa_return_timestamps(waveform, trellis, word_segments, -1)[-1]
+    return start, end
+    #todo put error here
+
+
+
+
+def check_alignment(quantifier_phrase, word_segments) -> bool:
+    found = None
     for index, word in enumerate(word_segments):
-        if not found:
+        if found:
             break
 
-        if word.label == quantifier_phrase[0]:
+        if word.label.lower() == quantifier_phrase[0]:
             for i in range(1, len(quantifier_phrase)):
-                if word_segments[index+i] != quantifier_phrase[i]:
+                if word_segments[index + i].label.split("(")[0].lower() != quantifier_phrase[i]:
                     found = False
                     break
-
-    if found:
-        pass
-
+            else:
+                found = True
 
 
 
