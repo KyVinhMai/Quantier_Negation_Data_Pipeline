@@ -1,6 +1,5 @@
 from pydub import AudioSegment
-from minimum_word_distance import minimum_word_length
-
+from utils.minimum_word_distance import minimum_word_length
 
 def process_text(sentence) -> [str]:
     sentence = sentence.replace(",", "").replace(".", "")
@@ -8,7 +7,7 @@ def process_text(sentence) -> [str]:
     return sentence.split()
 
 
-def return_time_stamps(utterance: str, raw_result: dict) -> tuple[float,float]:
+def whisper_time_stamps(utterance: str, raw_result: dict) -> tuple[float,float]:
     """
     raw_result[segments] = list of dictionaries
     segment["text"]
@@ -32,15 +31,16 @@ def return_time_stamps(utterance: str, raw_result: dict) -> tuple[float,float]:
             if minimum_word_length(process_text(segment['text']), process_text(utterance), first_word):
                 return segment["start"] * 1000, segment["end"] * 1000
 
-def extract_sentence(start:float, end:float, half_audio_name = "npr_evictions.mp3") -> AudioSegment:
-    audio_file = AudioSegment.from_wav(half_audio_name) #todo change
-    sentence_audio = audio_file[start:end]
-    return sentence_audio
+def extract_sentence(start:float, end:float, audio_name: str) -> AudioSegment:
+    "Segments the audio given the timestamps"
+    audio_file = AudioSegment.from_wav(audio_name)
+    return audio_file[start:end] if end else audio_file[start:]
 
-def write_trimmed_audio(trimmed_audio: AudioSegment, audio_dir:str) -> str:
-    """
-    Writes audio file. Returns file name
-    """
-    title = audio_dir.split("\\")[-1].split(".")[0] + "_trimmed" + ".wav"
-    trimmed_audio.export(title, format="wav")#todo check for wav
-    return title
+def fa_return_timestamps(waveform, trellis, word_segments, i: int) -> tuple[float, float]:
+    sample_rate = 44100
+    ratio = waveform.size(1) / (trellis.size(0) - 1)
+    word = word_segments[i]
+    x0 = int(ratio * word.start)
+    x1 = int(ratio * word.end)
+
+    return float(f"{x0 / sample_rate:.3f}") * 1000, float(f"{x1 / sample_rate:.3f}") * 1000

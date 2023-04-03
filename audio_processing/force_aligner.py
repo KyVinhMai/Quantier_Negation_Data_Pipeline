@@ -6,11 +6,7 @@ import torchaudio
 torch.random.manual_seed(0)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-print(torch.__version__)
-print(torchaudio.__version__)
-print(device)
-
-bundle = torchaudio.pipelines.WAV2VEC2_ASR_BASE_960H
+bundle = torchaudio.pipelines.WAV2VEC2_ASR_LARGE_960H
 model = bundle.get_model().to(device)
 labels = bundle.get_labels()
 
@@ -21,8 +17,12 @@ def get_trellis(emission, tokens, blank_id=0):
     # Trellis has extra diemsions for both time axis and tokens.
     # The extra dim for tokens represents <SoS> (start-of-sentence)
     # The extra dim for time axis is for simplification of the code.
-    trellis = torch.full((num_frame + 1, num_tokens + 1), -float("inf"))
-    trellis[:, 0] = 0
+    trellis = torch.empty((num_frame + 1, num_tokens + 1))
+    trellis[0, 0] = 0
+    trellis[1:, 0] = torch.cumsum(emission[:, 0], 0)
+    trellis[0, -num_tokens:] = -float("inf")
+    trellis[-num_tokens:, 0] = float("inf")
+
     for t in range(num_frame):
         trellis[t + 1, 1:] = torch.maximum(
             # Score for staying at the same token
@@ -130,13 +130,7 @@ def merge_words(segments, separator="|"):
             i2 += 1
     return words
 
-    return found
-
-def fa_return_timestamps(word_segments, i:int) -> tuple[float, float]:
-    word = word_segments[i]
-    return word.attributes
-
-def force_align(SPEECH_FILE: Path, transcript: str, index:int) -> tuple[float, float]:
+def force_align(SPEECH_FILE: str, transcript: str, index:int) -> tuple[list[Segment], torch.Tensor, torch.Tensor]:
     """
     Transcript should be formatted with dividers
     """
@@ -144,7 +138,8 @@ def force_align(SPEECH_FILE: Path, transcript: str, index:int) -> tuple[float, f
         waveform, _ = torchaudio.load(SPEECH_FILE)
         emissions, _ = model(waveform.to(device))
         emissions = torch.log_softmax(emissions, dim=-1)
-    emission = emissions[0].cpu().detach
+
+    emission = emissions[0].cpu().detach()
 
     dictionary = {c: i for i, c in enumerate(labels)}
     tokens = [dictionary[c] for c in transcript]
@@ -158,44 +153,8 @@ def force_align(SPEECH_FILE: Path, transcript: str, index:int) -> tuple[float, f
 
     print("Found Word Segments")
     print("=" * 36)
-    """
-    Splicing the audio from the quantifier to the end of the sentence.
-    Once the word matches the first word of the quantifier phrase,
-    ensure the neighboring words correct as well
-    
-    
-    some - somethings
-    """
-    # if check_alignment(quantifier_phrase, word_segments):
-    #     index = quantifier_phrase.index(quant)
-    #     match = word_segments[index:]
-    #     "We just need the time start of the quantifier word"
-    #     start = fa_return_timestamps(waveform, trellis, match, 0)[0]
-    #     # end = fa_return_timestamps(waveform, trellis, match, -1)[-1]
-    #     return start
 
-    start = fa_return_timestamps(waveform, trellis, word_segments, index)[0]
-    end = fa_return_timestamps(waveform, trellis, word_segments, -1)[-1]
-    return start, end
-    #todo put error here
-
-
-
-
-def check_alignment(quantifier_phrase, word_segments) -> bool:
-    found = None
-    for index, word in enumerate(word_segments):
-        if found:
-            break
-
-        if word.label.lower() == quantifier_phrase[0]:
-            for i in range(1, len(quantifier_phrase)):
-                if word_segments[index + i].label.split("(")[0].lower() != quantifier_phrase[i]:
-                    found = False
-                    break
-            else:
-                found = True
-
+    return word_segments, waveform, trellis
 
 
 
