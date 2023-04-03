@@ -3,13 +3,6 @@ from pathlib import Path
 import torch
 import torchaudio
 
-torch.random.manual_seed(0)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-bundle = torchaudio.pipelines.WAV2VEC2_ASR_LARGE_960H
-model = bundle.get_model().to(device)
-labels = bundle.get_labels()
-
 def get_trellis(emission, tokens, blank_id=0):
     num_frame = emission.size(0)
     num_tokens = len(tokens)
@@ -130,7 +123,8 @@ def merge_words(segments, separator="|"):
             i2 += 1
     return words
 
-def force_align(SPEECH_FILE: str, transcript: str, index:int) -> tuple[list[Segment], torch.Tensor, torch.Tensor]:
+def force_align(model, device, labels, SPEECH_FILE: str, transcript: str) \
+        -> tuple[list[Segment], torch.Tensor, torch.Tensor]:
     """
     Transcript should be formatted with dividers
     """

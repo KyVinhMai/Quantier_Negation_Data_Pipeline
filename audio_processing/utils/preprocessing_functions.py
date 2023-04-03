@@ -1,27 +1,7 @@
-import sqlite3
 from pydub import AudioSegment
 from mutagen.mp3 import MP3
-from spacy.tokens import Doc
 import math
-import en_core_web_sm
 import re
-from pathlib import Path
-nlp = en_core_web_sm.load()
-
-# conn = sqlite3.connect(r'D:\AmbiLab_data\quant_neg_data.db')
-# cursor = conn.cursor()
-
-def query_data(cursor) -> iter:
-    table_data = cursor.execute('''SELECT transcript, utterance, context FROM links INNER JOIN qn_sentences qs ON links.link = qs.url;''')
-    table_data = iter([line for line in table_data])
-    return table_data
-
-def write_audio(audio: AudioSegment, audio_dir:str, type:str) -> tuple[str, str]:
-    assert type in ["halved","trimmed","match"], "Audio type indicator not appropriate"
-    title = audio_dir.split("\\")[-1].split(".")[0] + f"_{type}" + ".wav"
-    audio.export(title, format="wav")
-    trimmed_audio_path = str(Path.cwd()) + '\\' + title
-    return title, trimmed_audio_path
 
 def segment_audio(audio_len: int) -> int:
     """
@@ -42,21 +22,6 @@ def split_audio(audio_dir:str, segment: int) -> AudioSegment:
 
     return trimmed_audio
 
-def localize_segment(json_transcript, utterance) -> int:
-    """
-    Finds the location of utterance by searching through the document
-
-    Returns whether the utterance is in the first half of the audio by taking
-    the average of the amount of sentences in the doc and splitting it.
-    """
-    doc_file = Doc(nlp.vocab).from_json(eval(json_transcript)) # is a string of the strung together sentences
-    sentences = [str(sent) for sent in doc_file.sents]
-    transcript_len = len(sentences)
-    avg = math.floor(transcript_len / 2)
-    index = sentences.index(utterance)
-
-    return 2 if index > avg else 1
-
 def transform_transcript(utterance:str, quant:str) -> tuple[str, int]:
     """
     The wav2vec model requires transcripts to be uppercase and have
@@ -72,6 +37,10 @@ def transform_transcript(utterance:str, quant:str) -> tuple[str, int]:
 
     return transcript, index
 
+def process_text(sentence) -> [str]:
+    sentence = sentence.replace(",", "").replace(".", "")
+    sentence = sentence.lower()
+    return sentence.split()
 
 if __name__ == "__main__":
     audio = MP3("test_file.mp3")

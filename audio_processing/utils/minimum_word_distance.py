@@ -2,7 +2,7 @@
 def minimum_word_length(segment:[str], utterance:[str], first_word:str) -> bool:
     """
     Assumptions:
-        > Whispher will have accurate transcription, but the punctuation marks
+        > Whisper will have accurate transcription, but the punctuation marks
         are inaccurate
         > Periods will either be commas or periods
         > The utterance itself is a sentence, so we just need to match a sentence
@@ -12,7 +12,7 @@ def minimum_word_length(segment:[str], utterance:[str], first_word:str) -> bool:
     """
     print(utterance, segment)
     index = segment.index(first_word)
-    if index == None:
+    if index is None:
         print("Index not found")
         return False
 
