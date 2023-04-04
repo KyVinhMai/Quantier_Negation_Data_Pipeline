@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from pathlib import Path
 import torch
 import torchaudio
 
@@ -123,14 +122,14 @@ def merge_words(segments, separator="|"):
             i2 += 1
     return words
 
-def force_align(model, device, labels, SPEECH_FILE: str, transcript: str) \
+def force_align(fa_model, device, labels, SPEECH_FILE: str, transcript: str) \
         -> tuple[list[Segment], torch.Tensor, torch.Tensor]:
     """
     Transcript should be formatted with dividers
     """
     with torch.inference_mode():
         waveform, _ = torchaudio.load(SPEECH_FILE)
-        emissions, _ = model(waveform.to(device))
+        emissions, _ = fa_model(waveform.to(device))
         emissions = torch.log_softmax(emissions, dim=-1)
 
     emission = emissions[0].cpu().detach()

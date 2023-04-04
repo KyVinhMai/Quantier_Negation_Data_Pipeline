@@ -17,7 +17,7 @@ cursor = conn.cursor()
 torch.random.manual_seed(0)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-bundle = torchaudio.pipelines.WAV2VEC2_ASR_LARGE_960HD
+bundle = torchaudio.pipelines.WAV2VEC2_ASR_LARGE_960H
 fa_model = bundle.get_model().to(device)
 labels = bundle.get_labels()
 
@@ -36,9 +36,11 @@ def main():
 
 def extract_match_file(audio_dir: str, utterance:str, json_transcript:str, quant:str) -> str:
     "Half Audio -> Trimmed Audio -> Match Audio"
+    sentences = pf.load_jsondoc(json_transcript)
+    utterance = pf.rm_nonlexical_items(utterance)
 
     "Split audio in half"
-    segment = lf.localize_segment(json_transcript, utterance) # Find where in the text the sentence could be
+    segment = lf.localize_match(sentences, utterance)  # Find where in the text the sentence could be
     audio_half = pf.split_audio(audio_dir, segment) # Split audio in half
     audio_half_name, _ = io.write_audio(audio_half, audio_dir, "halved")  # Put into audio directory
     whisper_transcript = model.transcribe(audio_half_name) # Get transcript
@@ -49,7 +51,7 @@ def extract_match_file(audio_dir: str, utterance:str, json_transcript:str, quant
     trimmed_audio_name, trimmed_path = io.write_audio(trimmed_audio, audio_dir, "trimmed")
 
     "Find exact match audio match"
-    fa_transcript, index = pf.transform_transcript(utterance, quant)
+    fa_transcript, index = pf.insert_vertical(utterance, quant)
     word_segments, waveform, trellis = force_align(model,device, labels, trimmed_path, fa_transcript)
     quant_ts, _ = lf.fa_return_timestamps(waveform, trellis, word_segments, index)
     match_audio = lf.extract_sentence(quant_ts, end, trimmed_audio_name)

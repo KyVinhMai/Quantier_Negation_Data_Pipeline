@@ -1,10 +1,18 @@
 import sqlite3
 import whisper
 import time
+import torch, torchaudio
+from utils import io_functions as io
 from utils import preprocessing_functions as pf, localization_functions as lf
 from force_aligner import force_align
-model = whisper.load_model('base')
+wh_model = whisper.load_model('base')
 
+torch.random.manual_seed(0)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+bundle = torchaudio.pipelines.WAV2VEC2_ASR_LARGE_960H
+fa_model = bundle.get_model().to(device)
+labels = bundle.get_labels()
 
 def localize_segment(utterance) -> int:
     import math
@@ -148,20 +156,20 @@ def extract_match(audio_dir, utterance, quant, context):
     "Split audio in half"
     segment = localize_segment(utterance) # Find where in the text the sentence could be
     audio_half = pf.split_audio(audio_dir, segment) # Split audio in half
-    audio_half_name, _ = pf.write_audio(audio_half, audio_dir, "halved")  # Put into audio directory
-    whisper_transcript = model.transcribe(audio_half_name) # Get transcript
+    audio_half_name, _ = io.write_audio(audio_half, audio_dir, "halved")  # Put into audio directory
+    whisper_transcript = wh_model.transcribe(audio_half_name) # Get transcript
 
     "Trim audio down to sentence"
     start, end = lf.whisper_time_stamps(utterance, whisper_transcript)  # Get time stamps
     trimmed_audio = lf.extract_sentence(start, end, audio_half_name)
-    trimmed_audio_name, trimmed_path = pf.write_audio(trimmed_audio, audio_dir, "trimmed")
+    trimmed_audio_name, trimmed_path = io.write_audio(trimmed_audio, audio_dir, "trimmed")
 
     "Find exact match audio match"
-    fa_transcript, index = pf.transform_transcript(utterance, quant)
-    word_segments, waveform, trellis = force_align(trimmed_path, fa_transcript, index)
+    fa_transcript, index = pf.insert_vertical(utterance, quant)
+    word_segments, waveform, trellis = force_align(fa_model, device, labels, trimmed_path, fa_transcript)
     quant_ts, _ = lf.fa_return_timestamps(waveform, trellis, word_segments, index)
     match_audio = lf.extract_sentence(quant_ts, end, trimmed_audio_name)
-    _, match_path = pf.write_audio(match_audio, audio_dir, "match")
+    _, match_path = io.write_audio(match_audio, audio_dir, "match")
 
     end = time.time()
     total_time = end - time_start
@@ -178,7 +186,20 @@ def extract_context(audio_dir: str, context: str, json_transcript: str) -> str:
     :return: path to processed audio context
     """
     # todo determine if context will have nonlexical items like KELLY or SOUNDBITE removed
-    context =
+    sentences = pf.load_jsondoc(json_transcript)
+    context_target = pf.transform_string(context)
+
+    "Split audio in half"
+    segment = lf.localize_context(sentences, context_target)
+    audio_half = pf.split_audio(audio_dir, segment)
+    audio_half_name, _ = io.write_audio(audio_half, audio_dir, "halved")  # Put into audio directory
+    whisper_transcript = wh_model.transcribe(audio_half_name)
+
+    "Trim audio down to sentences"
+    start, end = lf.whisper_time_stamps(context_target, whisper_transcript)  # Get time stamps
+    trimmed_audio = lf.extract_sentence(start, end, audio_half_name)
+    trimmed_audio_name, trimmed_path = io.write_audio(trimmed_audio, audio_dir, "trimmed")
+
 
 
 
@@ -186,7 +207,10 @@ def extract_context(audio_dir: str, context: str, json_transcript: str) -> str:
 if __name__ == "__main__":
     audio = "C:\\Users\\kyvin\\PycharmProjects\\QuantNeg_Webcrawler\\audio_processing\\npr_addiction.mp3"
     utterance = "So eventually, you know, that's where I got. I got to the point that, you know, I realized that everything I was doing was not helping him"; context = ""
-    audio2 = "D:\\Research_Projects\\Quantifer-Negation\\Quant_Neg_Pipeline\\audio_processing\\npr_evictions.mp3"
+    audio2 = "D:\\Research_Projects\\Quantifer-Negation\\Quantier_Negation_Data_Pipeline\\audio_processing\\npr_evictions.mp3"
     utterance2 = "Financial help is available, but maybe somebody doesn't apply or the assistance never comes through."
 
-    # extract_match(audio2, utterance2, "somebody", context)
+    context_t = ["CHRISTOPHER-JOYCE: Along the coast of Fiji's big island, Viti Levu, resort hotels and small fishing villages share the same view of the wide, blue Pacific.", 'You will find local musicians in both places.', 'Music is a social lubricate, like the greeting, bula, which can mean many things but mostly everything is just fine.', "But everything isn't just fine.", 'Fijians are noticing changes in their environment.']
+
+
+    extract_match(audio2, utterance2, "somebody", context)

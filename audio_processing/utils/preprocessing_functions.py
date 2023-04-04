@@ -2,6 +2,9 @@ from pydub import AudioSegment
 from mutagen.mp3 import MP3
 import math
 import re
+from spacy.tokens import Doc
+import en_core_web_sm
+nlp = en_core_web_sm.load()
 
 def segment_audio(audio_len: int) -> int:
     """
@@ -22,7 +25,7 @@ def split_audio(audio_dir:str, segment: int) -> AudioSegment:
 
     return trimmed_audio
 
-def transform_transcript(utterance:str, quant:str) -> tuple[str, int]:
+def insert_vertical(utterance:str, quant:str) -> tuple[str, int]:
     """
     The wav2vec model requires transcripts to be uppercase and have
     vertical lines between each word.
@@ -42,6 +45,36 @@ def process_text(sentence) -> [str]:
     sentence = sentence.lower()
     return sentence.split()
 
+def load_jsondoc(json_transcript) -> list[str]:
+    """
+    Loads json nlp transcript and returns segmented sentences
+
+    :param json_transcript:  str doc json object
+    :return: sentences
+    """
+    doc_file = Doc(nlp.vocab).from_json(eval(json_transcript))
+    doc_file = nlp(rm_nonlexical_items(doc_file.text))
+    sentences = [str(sent) for sent in doc_file.sents]
+
+    return sentences
+
+def transform_string(context: str) -> list[str]:
+    """
+    Loads json nlp transcript and returns segmented sentences
+
+    :param context:  str doc json object
+    :return: sentences
+    """
+    doc_file = nlp(rm_nonlexical_items(context))
+    sentences = [str(sent) for sent in doc_file.sents]
+
+    return sentences
+
+def rm_nonlexical_items(text):
+    "Items like SOUNDBITE or speaker titles will be removed"
+    pattern = re.compile("(([A-Z]+(\-| )[A-Z]+)+(?:\, [A-Z]+)*|[A-Z]+)\:|\([^)]*\)")
+    return re.sub(pattern, "", text)
+
+
 if __name__ == "__main__":
-    audio = MP3("test_file.mp3")
-    print(audio.info.length)
+    print(rm_nonlexical_items("CHRISTOPHER-JOYCE: Along the coast of Fiji's big island, Viti Levu, resort hotels and small fishing villages share the same view of the wide, blue Pacific. You will find local musicians in both places. Music is a social lubricate, like the greeting, bula, which can mean many things but mostly everything is just fine. But everything isn't just fine. Fijians are noticing changes in their environment."))
