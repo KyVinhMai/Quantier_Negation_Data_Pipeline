@@ -14,7 +14,6 @@ the quantifier itself
 
 #todo list. Make sure no has no punctuation after
 #Nobody who wears a blue coat, wasn't here.
-
 def is_quantifier_word(token, quantifier: str) -> str or None:
     if token.text.lower() == quantifier + "body":
         return token.text

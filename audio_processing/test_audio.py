@@ -3,8 +3,6 @@ import whisper
 import time
 from utils import preprocessing_functions as pf, localization_functions as lf
 from force_aligner import force_align
-# conn = sqlite3.connect(r'D:\AmbiLab_data\quant_neg_data.db')
-# cursor = conn.cursor()
 model = whisper.load_model('base')
 
 
