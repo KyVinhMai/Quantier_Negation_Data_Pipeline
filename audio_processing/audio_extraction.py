@@ -3,7 +3,7 @@ import whisper
 import torch
 import torchaudio
 import time
-from audio_processing.utils import io_functions as io
+from audio_processing.utils import io_functions as io, minimum_word_distance as md
 from audio_processing.utils import preprocessing_functions as pf, localization_functions as lf
 from force_aligner import force_align
 
@@ -46,7 +46,7 @@ def extract_match_file(audio_dir: str, utterance:str, json_transcript:str, quant
     whisper_transcript = model.transcribe(audio_half_name) # Get transcript
 
     "Trim audio down to sentence"
-    start, end = lf.whisper_time_stamps(utterance, whisper_transcript)  # Get time stamps
+    start, end = md.whisper_time_stamps(utterance, whisper_transcript)  # Get time stamps
     trimmed_audio = lf.extract_sentence(start, end, audio_half_name)
     trimmed_audio_name, trimmed_path = io.write_audio(trimmed_audio, audio_dir, "trimmed")
 
