@@ -38,17 +38,17 @@ def extract_metadata(soup) -> str:
 
 
 if __name__ == "__main__":
-    # import spacy
-    # import en_core_web_sm
-    # spacy.prefer_gpu()
-    # nlp = en_core_web_sm.load()
+    import spacy
+    import en_core_web_sm
+    spacy.prefer_gpu()
+    nlp = en_core_web_sm.load()
 
     # url = "https://www.npr.org/transcripts/1069273127"
     url = "https://www.npr.org/transcripts/11111096"
     page = requests.get(url)
     soup = BeautifulSoup(page.content, "html.parser")
 
-    print(extract_transcript(soup))
+    print(str(nlp("".join(extract_transcript(soup))).to_json()))
 
     # print([str(sent) for sent in nlp("".join(extract_transcript(soup))).sents])
 
