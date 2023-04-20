@@ -9,9 +9,9 @@ import en_core_web_sm
 from functools import partial
 import sqlite3
 import logging
-import os.path
-import argparse
 nlp = en_core_web_sm.load()
+nlp.disable_pipe("parser")
+nlp.enable_pipe("senter")
 
 "SQL Database"
 conn = sqlite3.connect(r'D:\AmbiLab_data\quant_neg_data.db')
@@ -21,7 +21,6 @@ export_QN = partial(sql.export_QuantNeg, cursor)
 "Logging Configuration"
 logging.basicConfig(
     level=logging.INFO,
-    format = "%(asctime)s - %(levelname)s %(messages)s",
     filename= "dependency_matching.log",
     filemode= "w"
 )

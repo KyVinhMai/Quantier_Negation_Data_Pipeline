@@ -32,6 +32,19 @@ def main():
         match_path = extract_match_file(audio_dir, utterance, json_transcript, quant)
         context_path = extract_full_file()
 
+        try:
+            io.export_Link(cursor, link, audio_dir, clauses, str(transcript.to_json()), 1, str(article_soup))
+            conn.commit()
+            print("> Exported:", title)
+        except sqlite3.Error as er:
+            logging.error(
+                f"""{'_' * 40}
+            Article ~ link db: {title}
+            SQL {(' '.join(er.args))}
+            {'_' * 40}"""
+            )
+        num_of_links += 1
+
         "Export to database"
 
 def extract_match_file(audio_dir: str, utterance:str, json_transcript:str, quant:str) -> str:

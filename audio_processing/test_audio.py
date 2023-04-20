@@ -173,7 +173,7 @@ def extract_match(audio_dir, utterance, quant, context):
 
     end = time.time()
     total_time = end - time_start
-    print("It took {} seconds to complete the NPR webcrawler".format(total_time))
+    print("It took {} seconds to extract the match file".format(total_time))
     print('You did it!')
 
 def extract_context(audio_dir: str, context: str, json_transcript: str) -> str:
@@ -185,7 +185,6 @@ def extract_context(audio_dir: str, context: str, json_transcript: str) -> str:
     :param json_transcript: transcript
     :return: path to processed audio context
     """
-    # todo determine if context will have nonlexical items like KELLY or SOUNDBITE removed
     sentences = pf.load_jsondoc(json_transcript)
     context_target = pf.transform_string(context)
 

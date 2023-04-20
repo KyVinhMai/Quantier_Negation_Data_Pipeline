@@ -7,6 +7,9 @@ def query_data(cursor) -> iter:
     table_data = iter([line for line in table_data])
     return table_data
 
+def export_Link(cursor, ):
+    cursor.execute('''INSERT INTO audio_table VALUES(?,?,?,?,?, ?)''', (Link, Audio_dir, Clauses, Transcript, Batch, html))
+
 def write_audio(audio: AudioSegment, audio_dir:str, type:str) -> tuple[str, str]:
     assert type in ["halved","trimmed","match"], "Audio type indicator not appropriate"
     title = audio_dir.split("\\")[-1].split(".")[0] + f"_{type}" + ".wav"
