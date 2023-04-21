@@ -2,12 +2,20 @@ from pathlib import Path
 from pydub import AudioSegment
 import shutil
 
+# Read and Write functions
+
+
 def query_data(cursor) -> iter:
     table_data = cursor.execute('''SELECT transcript, utterance, context FROM links INNER JOIN qn_sentences qs ON links.link = qs.url;''')
     table_data = iter([line for line in table_data])
     return table_data
 
 def write_audio(audio: AudioSegment, audio_dir:str, type:str) -> tuple[str, str]:
+    """
+    Places new audio in audio directory destination
+
+    returns string title and the directory path to written audio
+    """
     assert type in ["halved","trimmed","match"], "Audio type indicator not appropriate"
     title = audio_dir.split("\\")[-1].split(".")[0] + f"_{type}" + ".wav"
     audio.export(title, format="wav")

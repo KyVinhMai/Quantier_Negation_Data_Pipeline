@@ -27,6 +27,10 @@ def minimum_word_length(segment:[str], utterance_target:[str], first_word:str) -
 
 def whisper_time_stamps(utterance: str, whisper_transcript: dict) -> tuple[float,float]:
     """
+    Finds the sentence segment in the whisper transcript which contains the
+    first word, and then matches the rest of the utterance sentence to the
+    sentence.
+
     raw_result[segments] = list of dictionaries
     segment["text"]
 
@@ -49,8 +53,21 @@ def whisper_time_stamps(utterance: str, whisper_transcript: dict) -> tuple[float
             if minimum_word_length(process_text(segment['text']), process_text(utterance), first_word):
                 return segment["start"] * 1000, segment["end"] * 1000
 
-def whisper_context(target:[str], whisper_transcript: dict):
-    first_sent = target[0].lower()
+def whisper_context(context_target:[str], whisper_transcript: dict):
+    """
+    Uses only the first sentence and last sentence of the target context.
+    1 . Finds the inital time marker for the first sentence
+    2. Finds the last time marker for the last sentence
+
+    Returns those time markers together, assuming everything in between is
+    within the context
+    """
+    first_sent = context_target[0].lower()
+    first_word = first_sent.lower().split()[0]
+
+    last_sent = context_target[-1].lower()
+    last_word = last_sent[-1].lower()
+
     for segment in whisper_transcript["segments"]:
-        if first_sent in segment["text"].lower():
+        if first_word in segment["text"].lower():
             pass

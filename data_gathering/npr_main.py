@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup
-import QNI as qni
 import NPR_webscraper as npr
 import SQL_functions as sql
 from spacy.tokens import Doc
@@ -9,8 +8,7 @@ import en_core_web_sm
 from functools import partial
 import sqlite3
 import logging
-import os.path
-import argparse
+
 nlp = en_core_web_sm.load()
 
 "SQL Database"
@@ -51,9 +49,9 @@ def validate_quant_neg(link_row: str, extract_meta_data, ID: int):
         sentences = [sentence.text for sentence in transcript.sents]
         title = extract_meta_data(soup)
 
-        quants, matches, indices = qni.find_quantifier_negation(sentences, quantifiers) #todo remove all text
+        quants, matches, indices = QNI.find_quantifier_negation(sentences, quantifiers) #todo remove all text
         if matches:
-            context = qni.get_context(sentences, indices)
+            context = QNI.get_context(sentences, indices)
             print(f" + Found an Article '{title}' with {quants} \n")
             try:
                 for i in range(len(quants)):

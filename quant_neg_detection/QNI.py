@@ -2,7 +2,7 @@
 import spacy
 from spacy.matcher import DependencyMatcher
 spacy.prefer_gpu()
-import dependency_patterns as dp
+from quant_neg_detection import dependency_patterns as dp
 import en_core_web_sm
 import Quantifier_Phrase_Segmentation as qps
 nlp = en_core_web_sm.load()
@@ -121,7 +121,7 @@ def find_quantifier_negation(sentences: list[str], quantifiers=("every", "some",
         # i = i + 1
 
 
-    with open('Sentence_issues.csv', 'w', encoding='UTF16') as f:
+    with open('../Sentence_issues.csv', 'w', encoding='UTF16') as f:
         csv_writer = writer(f)
         for line in errors:
             csv_writer.writerow([line])

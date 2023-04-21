@@ -1,11 +1,7 @@
 import unittest
-import sys
-from os import path
 import en_core_web_sm
 nlp = en_core_web_sm.load()
-sys.path.append( path.dirname( path.dirname( path.abspath("C:\\Users\\kyvin\\PycharmProjects\\QuantNeg_Webcrawler\\Quantifier_Phrase_Segmentation.py") ) ) )
-import QNI
-import Quantifier_Phrase_Segmentation as QSP
+from quant_neg_detection import QNI, Quantifier_Phrase_Segmentation as QSP
 from pathlib import Path
 
 quantifier_data_files = {}

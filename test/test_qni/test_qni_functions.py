@@ -3,8 +3,8 @@ import sys
 from os import path
 import en_core_web_sm
 nlp = en_core_web_sm.load()
-sys.path.append( path.dirname( path.dirname( path.abspath("C:\\Users\\kyvin\\PycharmProjects\\QuantNeg_Webcrawler\\QNI.py") ) ) )
-import QNI
+sys.path.append(path.dirname(path.dirname(path.abspath("/quant_neg_detection/QNI.py"))))
+from quant_neg_detection import QNI
 from pathlib import Path
 
 quantifier_data_files = {}

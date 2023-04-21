@@ -12,6 +12,7 @@ import SQL_functions as sql
 import NPR_webscraper as npr
 spacy.prefer_gpu()
 import en_core_web_sm
+import random
 nlp = en_core_web_sm.load()
 
 "SQL Database"
@@ -105,6 +106,7 @@ async def collect_section_list_links(month_link: str, session: ClientSession) ->
         tasks = []
         for article in episode_list.find_all("h2", {"class": "program-show__title"}):
             try:
+                time.sleep(random.randint(0,20))
                 day_links = article.find('a').get('href')
                 tasks.append(asyncio.create_task(grab_day_catalogue_links(session, day_links)))
             except requests.exceptions.ConnectionError as e:

@@ -29,29 +29,29 @@ def main():
     for row in table_data:
         #audio_dir, transcript, quant, utterance, context
         audio_dir = row[0]; json_transcript = row[1], quant = row[2]; utterance = row[3]; context = row[4]
-        match_path = extract_match_file(audio_dir, utterance, json_transcript, quant)
-        context_path = extract_full_file()
+        match_path = extract_match_audio(audio_dir, utterance, json_transcript, quant)
+        context_path = extract_full_audio()
 
         "Export to database"
 
-def extract_match_file(audio_dir: str, utterance:str, json_transcript:str, quant:str) -> str:
+def extract_match_audio(audio_dir: str, target_utt:str, json_transcript:str, quant:str) -> str:
     "Half Audio -> Trimmed Audio -> Match Audio"
     sentences = pf.load_jsondoc(json_transcript)
-    utterance = pf.rm_nonlexical_items(utterance)
+    target_utt = pf.rm_nonlexical_items(target_utt)
 
     "Split audio in half"
-    segment = lf.localize_match(sentences, utterance)  # Find where in the text the sentence could be
+    segment = lf.localize_match(sentences, target_utt)  # Find where in the text the sentence could be
     audio_half = pf.split_audio(audio_dir, segment) # Split audio in half
     audio_half_name, _ = io.write_audio(audio_half, audio_dir, "halved")  # Put into audio directory
     whisper_transcript = model.transcribe(audio_half_name) # Get transcript
 
     "Trim audio down to sentence"
-    start, end = md.whisper_time_stamps(utterance, whisper_transcript)  # Get time stamps
+    start, end = md.whisper_time_stamps(target_utt, whisper_transcript)  # Get time stamps
     trimmed_audio = lf.extract_sentence(start, end, audio_half_name)
     trimmed_audio_name, trimmed_path = io.write_audio(trimmed_audio, audio_dir, "trimmed")
 
     "Find exact match audio match"
-    fa_transcript, index = pf.insert_vertical(utterance, quant)
+    fa_transcript, index = pf.insert_vertical(target_utt, quant)
     word_segments, waveform, trellis = force_align(model,device, labels, trimmed_path, fa_transcript)
     quant_ts, _ = lf.fa_return_timestamps(waveform, trellis, word_segments, index)
     match_audio = lf.extract_sentence(quant_ts, end, trimmed_audio_name)
@@ -61,5 +61,5 @@ def extract_match_file(audio_dir: str, utterance:str, json_transcript:str, quant
 
     return match_path
 
-def extract_full_file():
+def extract_full_audio():
     pass
