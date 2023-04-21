@@ -1,4 +1,4 @@
-from utils.preprocessing_functions import process_text
+from utils.preprocessing_functions import split_rm_punct
 
 def minimum_word_length(segment:[str], utterance_target:[str], first_word:str) -> bool:
     """
@@ -50,7 +50,7 @@ def whisper_time_stamps(utterance: str, whisper_transcript: dict) -> tuple[float
     first_word = utterance.lower().split()[0]
     for segment in whisper_transcript["segments"]:
         if first_word in segment["text"].lower():
-            if minimum_word_length(process_text(segment['text']), process_text(utterance), first_word):
+            if minimum_word_length(split_rm_punct(segment['text']), split_rm_punct(utterance), first_word):
                 return segment["start"] * 1000, segment["end"] * 1000
 
 def whisper_context(context_target:[str], whisper_transcript: dict):
@@ -68,6 +68,26 @@ def whisper_context(context_target:[str], whisper_transcript: dict):
     last_sent = context_target[-1].lower()
     last_word = last_sent[-1].lower()
 
-    for segment in whisper_transcript["segments"]:
+    start_ts = None
+    end_ts = None
+
+    whisper_iter = iter(whisper_transcript["segments"])
+
+    while start_ts is None:
+        segment = next(whisper_iter)
         if first_word in segment["text"].lower():
-            pass
+            if minimum_word_length(split_rm_punct(segment['text']), split_rm_punct(first_sent), first_word):
+                start_ts = segment["start"] * 1000
+
+    while end_ts is None:
+        segment = next(whisper_iter)
+        if last_word in segment["text"].lower():
+            if minimum_word_length(split_rm_punct(segment['text']), split_rm_punct(last_sent), first_word):
+                end_ts = segment["start"] * 1000
+
+    return start_ts, end_ts
+
+
+
+
+

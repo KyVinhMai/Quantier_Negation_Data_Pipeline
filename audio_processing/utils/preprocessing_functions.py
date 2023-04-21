@@ -39,7 +39,8 @@ def insert_vertical(utterance:str, quant:str) -> tuple[str, int]:
 
     return transcript, index
 
-def process_text(sentence) -> [str]:
+def split_rm_punct(sentence) -> list[str]:
+    "Remove comma and periods. Also lowers the str"
     sentence = sentence.replace(",", "").replace(".", "")
     sentence = sentence.lower()
     return sentence.split()
