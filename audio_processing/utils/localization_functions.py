@@ -15,18 +15,16 @@ def fa_return_timestamps(waveform, trellis, word_segments, i: int) -> tuple[floa
 
     return float(f"{x0 / sample_rate:.3f}") * 1000, float(f"{x1 / sample_rate:.3f}") * 1000
 
-def localize_match(sentences: list[str], target_utt: str) -> int:
+def localize_match(sentences: list[str], target_utt: str) -> float:
     """
-    Finds the location of utterance by searching through the document
+    Finds the location of utterance by searching through the document.
 
-    Returns whether the utterance is in the first half of the audio by taking
-    the average of the amount of sentences in the doc and splitting it.
-    :param sentences:  list of sentences split by punctuation
+    :param sentences: list of sentences split by punctuation
     :param target_utt: the sentence we want to match to
-    :return: 1 or 2, indicating which half of the audio file
+    :return: a range between 0-1, indicating which normalized location
+                of the audio the utterance lies
     """
     transcript_len = len(sentences)
-    avg = math.floor(transcript_len / 2)
 
     index = 0
     for i, sent in enumerate(sentences):
@@ -34,7 +32,7 @@ def localize_match(sentences: list[str], target_utt: str) -> int:
             index = i
             break
 
-    return 2 if index > avg else 1
+    return transcript_len / index
 
 def localize_context(sentences: [str], context_target: [str]) -> int:
     transcript_len = len(sentences)

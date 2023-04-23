@@ -19,7 +19,7 @@ def write_audio(audio: AudioSegment, audio_dir:str, type:str) -> tuple[str, str]
 
     returns string title and the directory path to written audio
     """
-    assert type in ["halved","trimmed","match"], "Audio type indicator not appropriate"
+    assert type in ["segment","trimmed","match"], "Audio type indicator not appropriate"
     title = audio_dir.split("\\")[-1].split(".")[0] + f"_{type}" + ".wav"
     audio.export(title, format="wav")
     trimmed_audio_path = str(Path.cwd()) + '\\' + title

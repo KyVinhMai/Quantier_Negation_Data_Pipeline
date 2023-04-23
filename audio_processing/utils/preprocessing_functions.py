@@ -6,21 +6,28 @@ from spacy.tokens import Doc
 import en_core_web_sm
 nlp = en_core_web_sm.load()
 
-def segment_audio(audio_len: int) -> int:
-    """
-    Returns the middle of the audio duration
-    """
-    new_length = math.floor(audio_len / 2)
+def segment_audio(audio_len: int, amount:int) -> int:
+    "Multiply by 1000 as AudioSegment measures in milliseconds"
+    new_length = math.floor(audio_len / amount)
 
     return new_length * 1000
 
-def split_audio(audio_dir:str, segment: int) -> AudioSegment:
+def splice_audio(audio_dir:str, loc: float) -> AudioSegment:
     audio_len = math.floor(MP3(audio_dir).info.length)
-    split_length = segment_audio(audio_len)
     audio_file = AudioSegment.from_mp3(audio_dir)
 
-    "if segment is 1, take the first half, else take the 2nd half"
-    trimmed_audio = audio_file[:split_length] if segment == 1 else audio_file[split_length:]
+    if loc <= 0.3: # Split into first half
+        split_length = segment_audio(audio_len, 2)
+        trimmed_audio = audio_file[:split_length]
+
+    elif loc >= 0.7: # Split into second half
+        split_length = segment_audio(audio_len, 2)
+        trimmed_audio = audio_file[split_length:]
+
+    else: # Audio clips is somewhere in the middle. Split into middle third
+        first_third = segment_audio(audio_len, 3)
+        last_third = math.floor(audio_len * 0.6) * 1000
+        trimmed_audio = audio_file[first_third:last_third]
 
     return trimmed_audio
 

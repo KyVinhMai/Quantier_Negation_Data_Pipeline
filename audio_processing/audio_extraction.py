@@ -29,8 +29,21 @@ def main():
     for row in table_data:
         #audio_dir, transcript, quant, utterance, context
         audio_dir = row[0]; json_transcript = row[1], quant = row[2]; utterance = row[3]; context = row[4]
-        match_path = extract_match_audio(audio_dir, utterance, json_transcript, quant)
-        context_path = extract_full_audio()
+
+        "Segment Audio -> Trimmed Audio -> Match Audio"
+        whisper_transcript, spliced_audio_name = locate_and_splice(
+            audio_directory=audio_dir,
+            context_target=context,
+            json_transcript=json_transcript)
+
+        match_path = extract_match_audio(
+            audio_directory=audio_dir,
+            target_utt=utterance,
+            whisper_transcript=whisper_transcript,
+            spliced_audio_name=spliced_audio_name,
+            quantifier=quant)
+
+        context_path = extract_context_audio()
 
         try:
             io.export_Link(cursor, link, audio_dir, clauses, str(transcript.to_json()), 1, str(article_soup))
@@ -47,32 +60,41 @@ def main():
 
         "Export to database"
 
-def extract_match_audio(audio_dir: str, target_utt:str, json_transcript:str, quant:str) -> str:
-    "Half Audio -> Trimmed Audio -> Match Audio"
-    sentences = pf.load_jsondoc(json_transcript)
-    target_utt = pf.rm_nonlexical_items(target_utt)
 
-    "Split audio in half"
-    segment = lf.localize_match(sentences, target_utt)  # Find where in the text the sentence could be
-    audio_half = pf.split_audio(audio_dir, segment) # Split audio in half
-    audio_half_name, _ = io.write_audio(audio_half, audio_dir, "halved")  # Put into audio directory
-    whisper_transcript = model.transcribe(audio_half_name) # Get transcript
+def locate_and_splice(audio_directory:str,
+                      context_target:str,
+                      json_transcript:str) -> tuple[dict, str]:
+    sentences = pf.load_jsondoc(json_transcript)
+    target_con = pf.rm_nonlexical_items(context_target)
+
+    "Splice audio"
+    context_loc = lf.localize_context(sentences, target_con)  # Find where in the text the sentence could be
+    audio_segment = pf.splice_audio(audio_directory, context_loc)  # Splice audio
+    spliced_audio_name, _ = io.write_audio(audio_segment, audio_directory, "segment")  # Put into audio directory
+    whisper_transcript = model.transcribe(spliced_audio_name)  # Get transcript
+
+    return whisper_transcript, spliced_audio_name
+
+def extract_match_audio(audio_directory: str, target_utt:str,
+                        whisper_transcript,
+                        spliced_audio_name:str,
+                        quantifier:str) -> str:
 
     "Trim audio down to sentence"
     start, end = md.whisper_time_stamps(target_utt, whisper_transcript)  # Get time stamps
-    trimmed_audio = lf.extract_sentence(start, end, audio_half_name)
-    trimmed_audio_name, trimmed_path = io.write_audio(trimmed_audio, audio_dir, "trimmed")
+    trimmed_audio = lf.extract_sentence(start, end, spliced_audio_name)
+    trimmed_audio_name, trimmed_path = io.write_audio(trimmed_audio, audio_directory, "trimmed")
 
     "Find exact match audio match"
-    fa_transcript, index = pf.insert_vertical(target_utt, quant)
-    word_segments, waveform, trellis = force_align(model,device, labels, trimmed_path, fa_transcript)
+    fa_transcript, index = pf.insert_vertical(target_utt, quantifier)
+    word_segments, waveform, trellis = force_align(model, device, labels, trimmed_path, fa_transcript)
     quant_ts, _ = lf.fa_return_timestamps(waveform, trellis, word_segments, index)
     match_audio = lf.extract_sentence(quant_ts, end, trimmed_audio_name)
-    _, match_path = io.write_audio(match_audio, audio_dir, "match")
+    _, match_path = io.write_audio(match_audio, audio_directory, "match")
 
     match_path = io.move_to_processed_folder(match_path, Audio_folder_path)
 
     return match_path
 
-def extract_full_audio():
+def extract_context_audio():
     pass

@@ -155,7 +155,7 @@ def extract_match(audio_dir, utterance, quant):
     time_start = time.time()
     "Split audio in half"
     segment = localize_segment(utterance) # Find where in the text the sentence could be
-    audio_half = pf.split_audio(audio_dir, segment) # Split audio in half
+    audio_half = pf.splice_audio(audio_dir, segment)  # Split audio in half
     audio_half_name, _ = io.write_audio(audio_half, audio_dir, "halved")  # Put into audio directory
     whisper_transcript = wh_model.transcribe(audio_half_name) # Get transcript
 
@@ -190,7 +190,7 @@ def extract_context(audio_dir: str, context: str, json_transcript: str) -> str:
 
     "Split audio in half"
     segment = lf.localize_context(sentences, context_target)
-    audio_half = pf.split_audio(audio_dir, segment)
+    audio_half = pf.splice_audio(audio_dir, segment)
     audio_half_name, _ = io.write_audio(audio_half, audio_dir, "halved")  # Put into audio directory
     whisper_transcript = wh_model.transcribe(audio_half_name)
 
