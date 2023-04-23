@@ -22,7 +22,10 @@ fa_model = bundle.get_model().to(device)
 labels = bundle.get_labels()
 
 "Whisper Model"
-model = whisper.load_model('base')
+wh_model = whisper.load_model('base')
+
+#NOTE THE DIFFERENCE IN VARIABLE NAMES IN WHISPER AND
+# THE FORCE ALIGNER MODELS
 
 def main():
     table_data = io.query_data(cursor)
@@ -64,6 +67,7 @@ def main():
 def locate_and_splice(audio_directory:str,
                       context_target:str,
                       json_transcript:str) -> tuple[dict, str]:
+
     sentences = pf.load_jsondoc(json_transcript)
     target_con = pf.rm_nonlexical_items(context_target)
 
@@ -71,7 +75,7 @@ def locate_and_splice(audio_directory:str,
     context_loc = lf.localize_context(sentences, target_con)  # Find where in the text the sentence could be
     audio_segment = pf.splice_audio(audio_directory, context_loc)  # Splice audio
     spliced_audio_name, _ = io.write_audio(audio_segment, audio_directory, "segment")  # Put into audio directory
-    whisper_transcript = model.transcribe(spliced_audio_name)  # Get transcript
+    whisper_transcript = wh_model.transcribe(spliced_audio_name)  # Get transcript
 
     return whisper_transcript, spliced_audio_name
 
@@ -87,7 +91,7 @@ def extract_match_audio(audio_directory: str, target_utt:str,
 
     "Find exact match audio match"
     fa_transcript, index = pf.insert_vertical(target_utt, quantifier)
-    word_segments, waveform, trellis = force_align(model, device, labels, trimmed_path, fa_transcript)
+    word_segments, waveform, trellis = force_align(fa_model, device, labels, trimmed_path, fa_transcript)
     quant_ts, _ = lf.fa_return_timestamps(waveform, trellis, word_segments, index)
     match_audio = lf.extract_sentence(quant_ts, end, trimmed_audio_name)
     _, match_path = io.write_audio(match_audio, audio_directory, "match")

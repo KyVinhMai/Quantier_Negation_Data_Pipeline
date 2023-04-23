@@ -1,9 +1,14 @@
 import unittest
 import en_core_web_sm
 nlp = en_core_web_sm.load()
-from audio_processing.utils import preprocessing_functions as pf
+from audio_processing.utils import preprocessing_functions as pf, \
+    localization_functions as lf
 
 class Test_Utils(unittest.TestCase):
+
+    def test_localize_context(self):
+        pass
+
     def test_transform_transcript_function(self):
         input = "the fox jumped over the lazy dog"
         correct = "THE|FOX|JUMPED|OVER|THE|LAZY|DOG"
@@ -15,11 +20,11 @@ class Test_Utils(unittest.TestCase):
     def test_rm_nonlexical(self):
         text1 = ""
         text2 = ""
-        with open("raw_text_1") as file:
+        with open("../data/raw_text_1") as file:
             for line in file:
                 text1 = line
 
-        with open("raw_text_2") as file:
+        with open("../data/raw_text_2") as file:
             for line in file:
                 text2 = line
 
