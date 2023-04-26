@@ -12,15 +12,16 @@ def segment_audio(audio_len: int, amount:int) -> int:
 
     return new_length * 1000
 
-def splice_audio(audio_dir:str, loc: float) -> AudioSegment:
+def splice_audio(audio_dir:str, loc: tuple[float,float]) -> AudioSegment:
+    assert None not in loc, "splice_audio: Location Indices have no value"
     audio_len = math.floor(MP3(audio_dir).info.length)
     audio_file = AudioSegment.from_mp3(audio_dir)
 
-    if loc <= 0.3: # Split into first half
+    if loc[0] <= 0.3 and loc[1] <= 0.3: # Split into first half
         split_length = segment_audio(audio_len, 2)
         trimmed_audio = audio_file[:split_length]
 
-    elif loc >= 0.7: # Split into second half
+    elif loc[0] >= 0.7 and loc[1] >= 0.7: # Split into second half
         split_length = segment_audio(audio_len, 2)
         trimmed_audio = audio_file[split_length:]
 

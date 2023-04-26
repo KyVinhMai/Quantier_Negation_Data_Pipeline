@@ -102,7 +102,7 @@ if __name__ == "__main__":
     context_t = ["CHRISTOPHER-JOYCE: Along the coast of Fiji's big island, Viti Levu, resort hotels and small fishing villages share the same view of the wide, blue Pacific.", 'You will find local musicians in both places.', 'Music is a social lubricate, like the greeting, bula, which can mean many things but mostly everything is just fine.', "But everything isn't just fine.", 'Fijians are noticing changes in their environment.']
 
 
-    test_splice()
+    test_splice(context_t)
 
     # extract_match(audio, utterance2, "somebody")
     # extract_context(audio2, "".join(context_t), json_file)

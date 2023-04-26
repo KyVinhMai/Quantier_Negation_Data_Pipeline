@@ -15,7 +15,7 @@ def fa_return_timestamps(waveform, trellis, word_segments, i: int) -> tuple[floa
 
     return float(f"{x0 / sample_rate:.3f}") * 1000, float(f"{x1 / sample_rate:.3f}") * 1000
 
-def localize_context(sentences: list[str], context_target: str) -> float:
+def localize_context(sentences: list[str], context_target: str) -> tuple[float, float]:
     """
     Finds the location of utterance by searching through the document.
 
@@ -25,12 +25,25 @@ def localize_context(sentences: list[str], context_target: str) -> float:
                 of the audio the utterance lies
     """
     transcript_len = len(sentences)
+    sent_iter = iter(sentences)
 
+    initial_index = None
+    end_index = None
     index = 0
-    for i, sent in enumerate(sentences):
+
+    while initial_index is None:
+        sent = next(sent_iter)
+        index += 1
         if context_target[0] in sent:
-            index = i
+            initial_index = index
             break
 
-    return transcript_len / index
+    while end_index is None:
+        sent = next(sent_iter)
+        index += 1
+        if context_target[-1] in sent:
+            end_index = index
+            break
+
+    return transcript_len / initial_index, transcript_len / end_index
 
