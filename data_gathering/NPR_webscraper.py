@@ -43,12 +43,14 @@ if __name__ == "__main__":
     spacy.prefer_gpu()
     nlp = en_core_web_sm.load()
 
-    # url = "https://www.npr.org/transcripts/1069273127"
-    url = "https://www.npr.org/transcripts/11111096"
+    url = "https://www.npr.org/2012/03/27/149472829/trayvon-martins-death-sparks-difficult-conversations"
     page = requests.get(url)
     soup = BeautifulSoup(page.content, "html.parser")
 
-    print(str(nlp("".join(extract_transcript(soup))).to_json()))
+    with open("npr_trayvon_martin_transcript.txt", "w") as f:
+        f.write(str(nlp("".join(extract_transcript(soup))).to_json()))
+
+    # print(str(nlp("".join(extract_transcript(soup))).to_json()))
 
     # print([str(sent) for sent in nlp("".join(extract_transcript(soup))).sents])
 

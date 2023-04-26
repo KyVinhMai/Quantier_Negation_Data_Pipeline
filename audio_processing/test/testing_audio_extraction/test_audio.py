@@ -4,7 +4,7 @@ import time
 import torch, torchaudio
 from audio_processing.utils import io_functions as io, minimum_word_distance as md
 from audio_processing.utils import preprocessing_functions as pf, localization_functions as lf
-from force_aligner import force_align
+from audio_processing import force_aligner as fa
 
 Audio_folder_path = "E:\\AmbiLab_data\\Audio"
 
@@ -28,9 +28,10 @@ def test_splice(audio_dir, json_transcript, quant, utterance, context):
     print(whisper_transcript)
 
 
-def locate_and_splice(audio_directory:str,
-                      context_target:str,
-                      json_transcript:str) -> tuple[dict, str]:
+def locate_and_splice(
+        audio_directory:str,
+        context_target:str,
+        json_transcript:str) -> tuple[dict, str]:
 
     sentences = pf.load_jsondoc(json_transcript)
     target_con = pf.rm_nonlexical_items(context_target)
@@ -55,7 +56,7 @@ def extract_match_audio(audio_directory: str, target_utt:str,
 
     "Find exact match audio match"
     fa_transcript, index = pf.insert_vertical(target_utt, quantifier)
-    word_segments, waveform, trellis = force_align(fa_model, device, labels, trimmed_path, fa_transcript)
+    word_segments, waveform, trellis = fa.force_align(fa_model, device, labels, trimmed_path, fa_transcript)
     quant_ts, _ = lf.fa_return_timestamps(waveform, trellis, word_segments, index)
     match_audio = lf.extract_sentence(quant_ts, end, trimmed_audio_name)
     _, match_path = io.write_audio(match_audio, audio_directory, "match")
@@ -92,17 +93,37 @@ def extract_context(audio_dir: str, context: str, json_transcript: str) -> str:
 
 
 if __name__ == "__main__":
-    laptop_audio = "C:\\Users\\kyvin\\PycharmProjects\\QuantNeg_Webcrawler\\audio_processing\\npr_evictions.mp3"
-    laptop_audio2 = "C:\\Users\\kyvin\\PycharmProjects\\QuantNeg_Webcrawler\\audio_processing\\npr_fiji.mp3"
+    test1 = False
+    test2 = False
+    test3 = False
+    if test1:
+        laptop_audio = "C:\\Users\\kyvin\\PycharmProjects\\QuantNeg_Webcrawler\\audio_processing\\npr_evictions.mp3"
+        utterance = "Financial help is available, but maybe somebody doesn't apply or the assistance never comes through."
 
-    utterance = "So eventually, you know, that's where I got. I got to the point that, you know, I realized that everything I was doing was not helping him"; context = ""
-    utterance2 = "Financial help is available, but maybe somebody doesn't apply or the assistance never comes through."
+    if test2:
+        audio_name = "npr_fiji.mp3"
+        utterance = "But everything isn't just fine."
 
-    #ID
-    context_t = ["CHRISTOPHER-JOYCE: Along the coast of Fiji's big island, Viti Levu, resort hotels and small fishing villages share the same view of the wide, blue Pacific.", 'You will find local musicians in both places.', 'Music is a social lubricate, like the greeting, bula, which can mean many things but mostly everything is just fine.', "But everything isn't just fine.", 'Fijians are noticing changes in their environment.']
+        with open("npr_fiji_transcript.txt", "r") as f:
+            json_transcript = f.readlines()
 
+        context_t = [
+            "CHRISTOPHER-JOYCE: Along the coast of Fiji's big island, Viti Levu, resort hotels and small fishing villages share the same view of the wide, blue Pacific.",
+            'You will find local musicians in both places.',
+            'Music is a social lubricate, like the greeting, bula, which can mean many things but mostly everything is just fine.',
+            "But everything isn't just fine.", 'Fijians are noticing changes in their environment.']
+        quant = "everything"
 
-    test_splice(context_t)
+        test_splice(audio_name, json_transcript, quant, utterance, context_t)
+
+    if test3:
+        audio_name = "npr_travyon_martin.mp3"
+        utterance = "everything they have ever done will not become public"
+
+        context_t = []
+        quant = "everything"
+        test_splice(audio_name, json_transcript, quant, utterance, context_t)
+
 
     # extract_match(audio, utterance2, "somebody")
     # extract_context(audio2, "".join(context_t), json_file)

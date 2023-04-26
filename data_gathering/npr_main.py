@@ -8,6 +8,7 @@ import en_core_web_sm
 from functools import partial
 import sqlite3
 import logging
+from quant_neg_detection import QNI
 
 nlp = en_core_web_sm.load()
 

@@ -4,31 +4,43 @@ import math
 import re
 from spacy.tokens import Doc
 import en_core_web_sm
-nlp = en_core_web_sm.load()
+nlp = en_core_web_sm.load(disable = ['ner', 'lemmatizer'])
+# Removing pipeline components allows spacy to run faster
 
-def segment_audio(audio_len: int, amount:int) -> int:
+def segment_audio(audio_len: int, amount:float) -> int:
     "Multiply by 1000 as AudioSegment measures in milliseconds"
-    new_length = math.floor(audio_len / amount)
+    # new_length = math.floor(audio_len / amount)
+    new_length = math.floor(audio_len * amount)
 
     return new_length * 1000
 
 def splice_audio(audio_dir:str, loc: tuple[float,float]) -> AudioSegment:
-    assert None not in loc, "splice_audio: Location Indices have no value"
+    assert None not in loc, "Splice_audio: Location Indices have no value"
     audio_len = math.floor(MP3(audio_dir).info.length)
     audio_file = AudioSegment.from_mp3(audio_dir)
 
-    if loc[0] <= 0.3 and loc[1] <= 0.3: # Split into first half
-        split_length = segment_audio(audio_len, 2)
-        trimmed_audio = audio_file[:split_length]
+    def padding(loc: tuple[float,float]) -> list:
+        indices = list(loc)
+        indices[0] = indices[0] - 0.1 if not indices[0] - 0.1 < 0 else indices[0]
+        indices[1] = indices[1] + 0.1 if not indices[1] + 0.1 > 1 else indices[1]
+        return indices
 
-    elif loc[0] >= 0.7 and loc[1] >= 0.7: # Split into second half
-        split_length = segment_audio(audio_len, 2)
-        trimmed_audio = audio_file[split_length:]
-
-    else: # Audio clips is somewhere in the middle. Split into middle third
-        first_third = segment_audio(audio_len, 3)
-        last_third = math.floor(audio_len * 0.6) * 1000
-        trimmed_audio = audio_file[first_third:last_third]
+    indices = padding(loc)
+    start_ts = segment_audio(audio_len, indices[0])
+    end_ts = abs(segment_audio(audio_len, indices[1]) - audio_len * 1000)
+    trimmed_audio = audio_file[start_ts:end_ts]
+    # if loc[0] <= 0.3 and loc[1] <= 0.3: # Split into first half
+    #     split_length = segment_audio(audio_len, 2)
+    #     trimmed_audio = audio_file[:split_length]
+    #
+    # elif loc[0] >= 0.7 and loc[1] >= 0.7: # Split into second half
+    #     split_length = segment_audio(audio_len, 2)
+    #     trimmed_audio = audio_file[split_length:]
+    #
+    # else: # Audio clips is somewhere in the middle. Split into middle third
+    #     first_third = segment_audio(audio_len, 3)
+    #     last_third = math.floor(audio_len * 0.6) * 1000
+    #     trimmed_audio = audio_file[first_third:last_third]
 
     return trimmed_audio
 
@@ -91,3 +103,4 @@ def rm_nonlexical_items(text: str) -> str:
     """
     pattern = re.compile("(([A-Z]+(\-| )[A-Z]+)+(?:\, [A-Z]+)*|[A-Z]+)\:|\([^)]*\)")
     return re.sub(pattern, "", text)
+
