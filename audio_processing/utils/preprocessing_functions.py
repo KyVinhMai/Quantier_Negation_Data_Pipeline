@@ -7,40 +7,31 @@ import en_core_web_sm
 nlp = en_core_web_sm.load(disable = ['ner', 'lemmatizer'])
 # Removing pipeline components allows spacy to run faster
 
-def segment_audio(audio_len: int, amount:float) -> int:
+def segment_audio(audio_len: float, amount:float) -> int:
     "Multiply by 1000 as AudioSegment measures in milliseconds"
-    # new_length = math.floor(audio_len / amount)
     new_length = math.floor(audio_len * amount)
 
     return new_length * 1000
 
-def splice_audio(audio_dir:str, loc: tuple[float,float]) -> AudioSegment:
-    assert None not in loc, "Splice_audio: Location Indices have no value"
+def return_audio_len(audio_dir: str) -> float:
+    "Returns the duration of the audio file in seconds"
     audio_len = math.floor(MP3(audio_dir).info.length)
+    return audio_len
+
+def splice_audio(audio_dir:str, audio_len: float, loc: tuple[float,float]): #-> AudioSegment:
+    assert None not in loc, "Splice_audio: Location Indices have no value"
     audio_file = AudioSegment.from_mp3(audio_dir)
 
     def padding(loc: tuple[float,float]) -> list:
         indices = list(loc)
-        indices[0] = indices[0] - 0.1 if not indices[0] - 0.1 < 0 else indices[0]
-        indices[1] = indices[1] + 0.1 if not indices[1] + 0.1 > 1 else indices[1]
+        indices[0] = indices[0] - 0.1 if not (indices[0] - 0.1) < 0 else indices[0]
+        indices[1] = indices[1] + 0.1 if not (indices[1] + 0.1) > 1 else indices[1]
         return indices
 
     indices = padding(loc)
     start_ts = segment_audio(audio_len, indices[0])
-    end_ts = abs(segment_audio(audio_len, indices[1]) - audio_len * 1000)
+    end_ts = segment_audio(audio_len, indices[1])
     trimmed_audio = audio_file[start_ts:end_ts]
-    # if loc[0] <= 0.3 and loc[1] <= 0.3: # Split into first half
-    #     split_length = segment_audio(audio_len, 2)
-    #     trimmed_audio = audio_file[:split_length]
-    #
-    # elif loc[0] >= 0.7 and loc[1] >= 0.7: # Split into second half
-    #     split_length = segment_audio(audio_len, 2)
-    #     trimmed_audio = audio_file[split_length:]
-    #
-    # else: # Audio clips is somewhere in the middle. Split into middle third
-    #     first_third = segment_audio(audio_len, 3)
-    #     last_third = math.floor(audio_len * 0.6) * 1000
-    #     trimmed_audio = audio_file[first_third:last_third]
 
     return trimmed_audio
 
@@ -65,7 +56,7 @@ def split_rm_punct(sentence) -> list[str]:
     sentence = sentence.lower()
     return sentence.split()
 
-def load_jsondoc(json_transcript) -> list[str]:
+def load_jsondoc(json_transcript: str) -> list[str]:
     """
     Loads json nlp transcript and returns segmented sentences
 
@@ -73,20 +64,8 @@ def load_jsondoc(json_transcript) -> list[str]:
     :return: sentences
     """
     doc_file = Doc(nlp.vocab).from_json(eval(json_transcript))
-    doc_file = nlp(rm_nonlexical_items(doc_file.text))
-    sentences = [str(sent) for sent in doc_file.sents]
-
-    return sentences
-
-def sentencify(context: str) -> list[str]:
-    """
-    Loads json nlp transcript and returns segmented sentences
-
-    :param context:  str doc json object
-    :return: sentences
-    """
-    doc_file = nlp(rm_nonlexical_items(context))
-    sentences = [str(sent) for sent in doc_file.sents]
+    sentences = [rm_nonlexical_items(sent.text) for sent in doc_file.sents]
+    sentences = [sent for sent in sentences if sent]
 
     return sentences
 

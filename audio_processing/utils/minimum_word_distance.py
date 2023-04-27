@@ -53,7 +53,7 @@ def whisper_time_stamps(utterance: str, whisper_transcript: dict) -> tuple[float
             if minimum_word_length(split_rm_punct(segment['text']), split_rm_punct(utterance), first_word):
                 return segment["start"] * 1000, segment["end"] * 1000
 
-def whisper_context(context_target:[str], whisper_transcript: dict):
+def whisper_context(context_target: list[str], whisper_transcript: dict):
     """
     Uses only the first sentence and last sentence of the target context.
     1 . Finds the inital time marker for the first sentence

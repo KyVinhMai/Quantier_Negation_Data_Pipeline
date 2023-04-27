@@ -47,11 +47,11 @@ if __name__ == "__main__":
     page = requests.get(url)
     soup = BeautifulSoup(page.content, "html.parser")
 
-    with open("npr_trayvon_martin_transcript.txt", "w") as f:
-        f.write(str(nlp("".join(extract_transcript(soup))).to_json()))
+    # with open("npr_trayvon_martin_transcript.txt", "w") as f:
+    #     f.write(str(nlp("".join(extract_transcript(soup))).to_json()))
 
     # print(str(nlp("".join(extract_transcript(soup))).to_json()))
 
-    # print([str(sent) for sent in nlp("".join(extract_transcript(soup))).sents])
+    print([str(sent) for sent in nlp("".join(extract_transcript(soup))).sents])
 
 
