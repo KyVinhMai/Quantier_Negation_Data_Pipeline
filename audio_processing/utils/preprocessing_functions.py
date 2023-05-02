@@ -35,7 +35,7 @@ def splice_audio(audio_dir:str, audio_len: float, loc: tuple[float,float]): #-> 
 
     return trimmed_audio
 
-def insert_vertical(utterance:str, quant:str) -> tuple[str, int]:
+def insert_vertical(utterance: str = None, context:str = None, quant:str = None) -> tuple[str, int] or str:
     """
     The wav2vec model requires transcripts to be uppercase and have
     vertical lines between each word.
@@ -44,11 +44,17 @@ def insert_vertical(utterance:str, quant:str) -> tuple[str, int]:
 
     The function also returns the location of the quantifier
     """
-    utterance_list = re.sub(r'[!|?|.|,|[|]|]', '', utterance).split(" ")
-    index = utterance_list.index(quant)
-    transcript = "|".join([word.upper() for word in utterance_list])
+    if utterance and quant:
+        utterance_list = re.sub(r'[!|?|.|,|[|]', '', utterance).split(" ") # Removes punctuation
+        index = utterance_list.index(quant)
+        transcript = "|".join([word.upper() for word in utterance_list])
 
-    return transcript, index
+        return transcript, index
+
+    else:
+        context_list = re.sub(r'[!|?|.|,|[|]', '', context).split(" ")  # Removes punctuation
+        transcript = "|".join([word.upper() for word in context_list])
+        return transcript
 
 def split_rm_punct(sentence) -> list[str]:
     "Remove comma and periods. Also lowers the str"

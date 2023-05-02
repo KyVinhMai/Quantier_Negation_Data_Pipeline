@@ -1,6 +1,6 @@
 from utils.preprocessing_functions import split_rm_punct
 
-def minimum_word_length(segment:[str], utterance_target:[str], first_word:str) -> bool:
+def minimum_word_length(segment:[str], sentence_target:[str], first_word:str) -> bool:
     """
     Assumptions:
         > Whisper will have accurate transcription, but the punctuation marks
@@ -10,14 +10,20 @@ def minimum_word_length(segment:[str], utterance_target:[str], first_word:str) -
         to a sentence
 
     Both sentences should be processed, and punctuation marks should be removed
+
+    Loops through both sentences simultaneously
     """
     index = segment.index(first_word)
-    if index is None:
-        raise Exception("Index not found")
+    assert index is not None, "Index not found"
 
     result = True
-    for i in range(len(utterance_target)):
-        if utterance_target[i] != segment[index]:
+    for i in range(len(sentence_target)):
+        # print(f"<{sentence_target[i], segment[index]}>", "\n", "sentence:", segment, sentence_target)
+        try:
+            if sentence_target[i] != segment[index]:
+                result = False
+                break
+        except IndexError:
             result = False
             break
         index += 1

@@ -59,6 +59,7 @@ def localize_context(sentences: list[str], context_target: list[str]) -> tuple[f
             if context_target[-1].strip() in sent:
                 end_index = index
                 break
+        #Try using Cosine Similarity
 
     return round(initial_index/transcript_len, 3), round(end_index/transcript_len, 3)
 

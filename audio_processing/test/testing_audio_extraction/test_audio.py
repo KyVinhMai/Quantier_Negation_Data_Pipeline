@@ -44,8 +44,8 @@ def locate_and_splice(
     audio_len = pf.return_audio_len(audio_directory) # Duration in seconds
 
     "Splice audio"
-    context_loc = lf.localize_context(sentences, target_con)  # Find where in the text the sentence could be
-    audio_segment = pf.splice_audio(audio_directory, audio_len, context_loc)  # Splice audio
+    context_location = lf.localize_context(sentences, target_con)  # Find where in the text the sentence could be
+    audio_segment = pf.splice_audio(audio_directory, audio_len, context_location)  # Splice audio
     new_audio_name, _ = io.write_audio(audio_segment, audio_directory, "segment")  # Put into audio directory
     whisper_transcript = wh_model.transcribe(new_audio_name)  # Get transcript
 
@@ -75,8 +75,7 @@ def test_context_audio(audio_dir, json_transcript:str, quant, utterance, context
     match_path = extract_context_audio(
         context_target=context,
         whisper_transcript=whisper_transcript,
-        audio_fragment=spliced_audio_name,
-        quantifier=quant)
+        audio_fragment=spliced_audio_name)
 
     print(match_path)
 
@@ -93,7 +92,7 @@ def extract_match_audio(
     trimmed_audio_name, trimmed_path = io.write_audio(trimmed_audio, audio_fragment, "trimmed")
 
     "Find exact match audio match"
-    fa_transcript, index = pf.insert_vertical(target_utt, quantifier)
+    fa_transcript, index = pf.insert_vertical(utterance=target_utt, quant=quantifier)
     word_segments, waveform, trellis = fa.force_align(fa_model, device, labels, trimmed_path, fa_transcript)
     quantifier_ts, _ = lf.fa_return_timestamps(waveform, trellis, word_segments, index)
     match_audio = lf.extract_sentence(quantifier_ts, None, trimmed_audio_name)
@@ -104,20 +103,22 @@ def extract_match_audio(
     return match_path
 
 
-def extract_context_audio(audio_fragment, context_target: list[str], whisper_transcript: dict, quantifier) -> str:
+def extract_context_audio(audio_fragment, context_target: list[str], whisper_transcript: dict):
     "Trim audio down to sentences"
     start, end = md.whisper_context(context_target, whisper_transcript)  # Get time stamps
     trimmed_audio = lf.extract_sentence(start, end, audio_fragment)
     trimmed_audio_name, trimmed_path = io.write_audio(trimmed_audio, audio_fragment, "trimmed")
 
-    "Find exact match audio match"
-    fa_transcript, _ = pf.insert_vertical("".join(context_target), quantifier)
-    word_segments, waveform, trellis = fa.force_align(fa_model, device, labels, trimmed_path, fa_transcript)
-    start_ts, end_ts = lf.fa_return_timestamps(waveform, trellis, word_segments, index)
-    match_audio = lf.extract_sentence(start_ts, end_ts, trimmed_audio_name)
-    _, match_path = io.write_audio(match_audio, audio_fragment, "match")
+    # "Find exact match audio match"
+    # fa_transcript = pf.insert_vertical(context="".join(context_target))
+    # word_segments, waveform, trellis = fa.force_align(fa_model, device, labels, trimmed_path, fa_transcript)
+    # start_ts, end_ts = lf.fa_return_timestamps(waveform, trellis, word_segments, index)
+    # match_audio = lf.extract_sentence(start_ts, end_ts, trimmed_audio_name)
+    # _, match_path = io.write_audio(match_audio, audio_fragment, "match")
+    #
+    # context_path = io.move_to_processed_folder(match_path, Audio_folder_path)
 
-    match_path = io.move_to_processed_folder(match_path, Audio_folder_path)
+    print(trimmed_audio_name, trimmed_path)
 
 
 
@@ -158,7 +159,8 @@ if __name__ == "__main__":
             json_transcript = f.read()
 
         quant = "everything"
-        test_match_audio(audio_name, json_transcript, quant, utterance, context_t)
+        # test_match_audio(audio_name, json_transcript, quant, utterance, context_t)
+        test_context_audio(audio_name, json_transcript, quant, utterance, context_t)
 
 
     # extract_match(audio, utterance2, "somebody")
