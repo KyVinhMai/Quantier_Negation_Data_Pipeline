@@ -2,7 +2,7 @@
 import spacy
 from spacy.matcher import DependencyMatcher
 spacy.prefer_gpu()
-from quant_neg_detection import dependency_patterns as dp
+import dependency_patterns as dp
 import en_core_web_sm
 import Quantifier_Phrase_Segmentation as qps
 nlp = en_core_web_sm.load()
@@ -87,7 +87,7 @@ def validate_quant_neg(transcript: list[str], quantifiers):
 def is_standalone(sentence, quantifiers):
     pass
 
-def find_quantifier_negation(sentences: list[str], quantifiers=("every", "some", "all")):
+def find_quantifier_negation(sentences: list[str], quantifiers):
     print('INFO: Beginning search for quantifier + negation statements.')
     print("=" * 60, "\n")
     quants = []; sents = []; standalone = []; indices = []; errors = []

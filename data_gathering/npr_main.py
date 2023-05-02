@@ -8,12 +8,14 @@ import en_core_web_sm
 from functools import partial
 import sqlite3
 import logging
-from quant_neg_detection import QNI
+import sys
+sys.path.insert(0, r'D:\Research_Projects\Quantifer-Negation\Quantier_Negation_Data_Pipeline\quant_neg_detection')
+import QNI
 
 nlp = en_core_web_sm.load()
 
 "SQL Database"
-conn = sqlite3.connect(r'D:\AmbiLab_data\quant_neg_data.db')
+conn = sqlite3.connect(r'E:\AmbiLab_data\quant_neg_data.db')
 cursor = conn.cursor()
 export_QN = partial(sql.export_QuantNeg, cursor)
 
@@ -25,7 +27,7 @@ logging.basicConfig(
     filemode= "w"
 )
 
-quantifiers = ['every', "any", "all", "some"] #todo clean this up
+quantifiers = ['every'] #todo clean this up
 
 link_table_keys = {
     "link": [0],
@@ -78,7 +80,7 @@ def main():
     data_iter = iter([row for row in sql.select_batch(cursor, conn, batch_num="1")])
     ID = sql.QN_last_ID(cursor)
     if ID == None:
-        ID = 400
+        ID = 500
     else:
         ID = ID[0]
 

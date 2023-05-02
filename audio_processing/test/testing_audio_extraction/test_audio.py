@@ -73,7 +73,7 @@ def test_context_audio(audio_dir, json_transcript:str, quant, utterance, context
         json_transcript=json_transcript)
 
     match_path = extract_context_audio(
-        target_utt=utterance,
+        context_target=context,
         whisper_transcript=whisper_transcript,
         audio_fragment=spliced_audio_name,
         quantifier=quant)
