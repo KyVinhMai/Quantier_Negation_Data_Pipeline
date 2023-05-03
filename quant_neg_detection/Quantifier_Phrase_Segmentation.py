@@ -2,7 +2,7 @@ import spacy
 from spacy.matcher import Matcher, DependencyMatcher
 spacy.prefer_gpu()
 import en_core_web_sm
-import dependency_patterns as dp
+import quant_neg_detection.dependency_patterns as dp
 
 nlp = en_core_web_sm.load()
 

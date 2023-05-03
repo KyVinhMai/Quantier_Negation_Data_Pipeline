@@ -1,13 +1,13 @@
-# Quantifier Negation Sentence Identifier
+import quant_neg_detection.dependency_patterns as dp
+import en_core_web_sm
+import quant_neg_detection.Quantifier_Phrase_Segmentation as qps
+from csv import writer
 import spacy
 from spacy.matcher import DependencyMatcher
 spacy.prefer_gpu()
-import dependency_patterns as dp
-import en_core_web_sm
-import Quantifier_Phrase_Segmentation as qps
 nlp = en_core_web_sm.load()
-from csv import writer
 print('INFO: spaCy initialized successfully.')
+# Quantifier Negation Sentence Identifier
 
 
 def get_quantifier(sentence: str, quantifiers: list[str]) -> tuple[str, str] or None:
