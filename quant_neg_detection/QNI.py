@@ -11,23 +11,17 @@ print('INFO: spaCy initialized successfully.')
 
 
 def get_quantifier(sentence: str, quantifiers: list[str]) -> tuple[str, str] or None:
-    """
-    sentence: Doc
-    quantifiers: List of quantifiers
-    returns: token, quantifier, neg_idex,  quant_orth
-    """
-    def get_negation(sentence: str) -> int:
+    def get_negation(doc: nlp) -> int:
         """
-        Splits the sentence in half up till the negation. Helps with computation and preventing QSI
-        from grabbing of multiple unintended quantifiers. Matches is [-1] to grab the latest negation.
+        Splits the sentence in half up till the negation. Helps with computation and preventing QPS
+        from grabbing of multiple unintended quantifiers.
         """
-        doc = nlp(sentence)
         neg_matcher = DependencyMatcher(nlp.vocab)
         neg_matcher.add("find neg particle", [dp.neg_pattern])
         matches = neg_matcher(doc)
 
         if matches:
-            match_id, token_ids = matches[-1]
+            match_id, token_ids = matches[-1] #Matches is [-1] to grab the latest negation.
             return token_ids[0]
 
     doc = nlp(sentence)
@@ -35,7 +29,7 @@ def get_quantifier(sentence: str, quantifiers: list[str]) -> tuple[str, str] or 
     for token in doc:
         for quantifier in quantifiers:
             if quantifier in token.text.lower():
-                neg_index = get_negation(sentence) #Making the assumption that the quantifier comes before the negation
+                neg_index = get_negation(doc) #Making the assumption that the quantifier comes before the negation
                 if neg_index:
                     quant_text = qps.find_quantifier_category(token, quantifier, doc[:neg_index])
                     if quant_text: #Get the splice of the sentence before negation
@@ -108,17 +102,6 @@ def find_quantifier_negation(sentences: list[str], quantifiers):
             print("QNI Error with", candidate)
             errors.append(f"{candidate} + {e}")
             print(e)
-
-        # if is_quantifier_negation(sentence, quantifiers):
-        #     token, quant, neg_index, _ = get_quantifier(sentence, quantifiers)
-        #     quants.append(qps.find_quantifier_category(token, quant, nlp(sentence)[
-        #                                                              :neg_index]))  # todo change into quantifier category
-        #     sents.append(sentence)
-        #     indices.append(i)
-        #     print(">>>>>> ", sentence, "<<<<<<<")
-        #     # standalone.append("True" if is_standalone(sentence, quantifiers) else "False")
-
-        # i = i + 1
 
 
     with open('../Sentence_issues.csv', 'w', encoding='UTF16') as f:
