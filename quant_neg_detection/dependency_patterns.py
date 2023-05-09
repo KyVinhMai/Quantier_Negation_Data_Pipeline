@@ -120,6 +120,6 @@ def det_pattern(orth: str) -> list[dict]:
 neg_pattern = [
         {
             "RIGHT_ID": "anchor_negation",
-            "RIGHT_ATTRS": {"POS": "PART", "DEP":"neg"}
+            "RIGHT_ATTRS": {"POS": "PART", "DEP": "neg"}
         },
     ]

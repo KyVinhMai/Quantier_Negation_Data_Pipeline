@@ -71,13 +71,6 @@ def is_quantifier_negation(sentence: str, quantifiers: list[str]) -> bool:
 
     return dependency_exists(sentence, quant_text)
 
-def validate_quant_neg(transcript: list[str], quantifiers):
-    for sentence in transcript:
-        if is_quantifier_negation(sentence, quantifiers):
-            return True
-
-    return False
-
 def is_standalone(sentence, quantifiers):
     pass
 
@@ -88,8 +81,8 @@ def find_quantifier_negation(sentences: list[str], quantifiers):
     i = 0
     for candidate in sentences:
         try:
-            if is_quantifier_negation(candidate, quantifiers):
-                token, quant, neg_fragment, _ = get_quantifier(candidate, quantifiers)
+            token, quant, neg_fragment, _ = get_quantifier(candidate, quantifiers)
+            if token is not None:
                 quants.append(qps.find_quantifier_category(token, quant, neg_fragment)) #todo change into quantifier category
                 sents.append(candidate)
                 # standalone.append("True" if is_standalone(sentence, quantifiers) else "False")
@@ -131,5 +124,6 @@ if __name__ == '__main__':
     sentence = ["And right now, well, I have to begin with a confession: I love maps.", " Because everybody who knew her and her kids thought she was highly devoted to them and can not conceive of her leaving her kids for any reason whatsoever. "]
     no_sentence = ["No! That isn't right."]
     some_sentence = ['some of us might not notice']
-    print(find_quantifier_negation(some_sentence))
+    every_sentence = ["everyone is not a reporter from The New York Times"]
+    print(find_quantifier_negation(every_sentence, "every"))
 
