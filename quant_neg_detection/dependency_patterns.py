@@ -94,7 +94,7 @@ def poss_pattern(orth: str) -> list[dict]:
                 "LEFT_ID": "anchor_quantifier",
                 "REL_OP": ">",
                 "RIGHT_ID": "anchor_part",
-                "RIGHT_ATTRS": {"DEP": "case", "LOWER": "'s"},
+                "RIGHT_ATTRS": {"DEP":{"IN" : ["case", "advmod"]}, "POS": {"IN" : ["ADV", "PART"]}},
             }
         ]
 
