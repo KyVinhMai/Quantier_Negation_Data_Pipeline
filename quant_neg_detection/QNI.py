@@ -1,11 +1,10 @@
 import quant_neg_detection.dependency_patterns as dp
-import en_core_web_sm
+import en_core_web_trf
 import quant_neg_detection.Quantifier_Phrase_Segmentation as qps
-from csv import writer
 import spacy
 from spacy.matcher import DependencyMatcher
 spacy.prefer_gpu()
-nlp = en_core_web_sm.load()
+nlp = en_core_web_trf.load(exclude=["lemmatizer"])
 print('INFO: spaCy initialized successfully.')
 # Quantifier Negation Sentence Identifier
 
@@ -43,7 +42,7 @@ def dependency_exists(sentence: str, quant_segment: str):
 
     dependency_matcher = DependencyMatcher(nlp.vocab)
     dependency_matcher.add("find aux sentence type", [dp.aux_pattern])
-    dependency_matcher.add("find verb sentence type", [dp.verb_pattern])
+    # dependency_matcher.add("find verb sentence type", [dp.verb_pattern])
 
     matches = dependency_matcher(doc)
 
@@ -56,7 +55,7 @@ def dependency_exists(sentence: str, quant_segment: str):
                     print("-"*36)
                     print(token_ids)
                     for i in range(len(token_ids)):
-                        print(dp.verb_pattern[i]["RIGHT_ID"] + ":", doc[token_ids[i]].text)
+                        print(dp.aux_pattern[i]["RIGHT_ID"] + ":", doc[token_ids[i]].text)
                     print("-" * 36)
 
             if doc[noun_subject_index].text in quant_segment:
@@ -64,28 +63,20 @@ def dependency_exists(sentence: str, quant_segment: str):
 
     return False
 
-def is_quantifier_negation(sentence: str, quantifiers: list[str]) -> bool:
-    token, quantifier, neg_index, quant_text = get_quantifier(sentence, quantifiers)
-    if token is None:
-        return False
-
-    return dependency_exists(sentence, quant_text)
-
 def is_standalone(sentence, quantifiers):
     pass
 
-def find_quantifier_negation(sentences: list[str], quantifiers):
+def find_quantifier_negation(sentences: list[str], quantifiers) -> tuple[list, list, list]:
     print('INFO: Beginning search for quantifier + negation statements.')
     print("=" * 60, "\n")
     quants = []; sents = []; standalone = []; indices = []; errors = []
     i = 0
     for candidate in sentences:
         try:
-            token, quant, neg_fragment, _ = get_quantifier(candidate, quantifiers)
-            if token is not None:
-                quants.append(qps.find_quantifier_category(token, quant, neg_fragment)) #todo change into quantifier category
+            token, quant, neg_fragment, quant_text = get_quantifier(candidate, quantifiers)
+            if token is not None and dependency_exists(candidate, quant_text):
+                quants.append(quant_text) #todo change into quantifier category
                 sents.append(candidate)
-                # standalone.append("True" if is_standalone(sentence, quantifiers) else "False")
                 indices.append(i)
 
                 print(">>>>>> ", candidate, "<<<<<<<")
@@ -95,12 +86,6 @@ def find_quantifier_negation(sentences: list[str], quantifiers):
             print("QNI Error with", candidate)
             errors.append(f"{candidate} + {e}")
             print(e)
-
-
-    with open('../Sentence_issues.csv', 'w', encoding='UTF16') as f:
-        csv_writer = writer(f)
-        for line in errors:
-            csv_writer.writerow([line])
 
     print("\n", "="*60)
     print('INFO: Search completed with ' + str(len(sents)) + ' potential quantifier + negations.')
@@ -120,10 +105,20 @@ def get_context(sentences, indices) -> str:
 
     return " ".join(ret)
 
+#For Testing
+def is_quantifier_negation(sentence: str, quantifiers: list[str]) -> bool:
+    token, quantifier, neg_index, quant_text = get_quantifier(sentence, quantifiers)
+    if token is None:
+        return False
+
+    return dependency_exists(sentence, quant_text)
+
+
+
 if __name__ == '__main__':
     sentence = ["And right now, well, I have to begin with a confession: I love maps.", " Because everybody who knew her and her kids thought she was highly devoted to them and can not conceive of her leaving her kids for any reason whatsoever. "]
     no_sentence = ["No! That isn't right."]
     some_sentence = ['some of us might not notice']
-    every_sentence = ["everyone is not a reporter from The New York Times"]
-    print(find_quantifier_negation(every_sentence, "every"))
+    every_sentence = ["everyone else's fairy tale story - mine - really wasn't quite what they thought it was-"]
+    print(find_quantifier_negation(every_sentence, ["everyone"]))
 

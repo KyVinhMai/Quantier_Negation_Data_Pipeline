@@ -75,12 +75,10 @@ def possessive_exists(token, index:int, doc: nlp) -> str:
 
     return token.text
 
-def is_quantifier_noun(token, index: int, doc: nlp):#Todo use matcher to find the index
+def is_quantifier_noun(token, doc: nlp):#Todo use matcher to find the index
     """
     Detects if the quantifier is quantifying a noun.
     """
-    word_neighbor = doc[index].nbor()
-
     #Check for noun
     det_matcher = DependencyMatcher(nlp.vocab)
     det_matcher.add("determiner_patter", [dp.det_pattern(token.text)])
@@ -142,7 +140,7 @@ def find_quantifier_category(token, quantifier: str,  doc: nlp) -> str or None:
     if is_quantifier_word(token, quantifier):
         return possessive_exists(token, index, doc)
     else:
-        check_noun = is_quantifier_noun(token, index, doc)
+        check_noun = is_quantifier_noun(token, doc)
 
     if check_noun is not None:
         return check_noun

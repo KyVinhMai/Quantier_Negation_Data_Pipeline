@@ -16,7 +16,7 @@ aux_pattern = [
             "LEFT_ID": "anchor_aux",
             "REL_OP": ">",
             "RIGHT_ID": "noun_subject",
-            "RIGHT_ATTRS": {"DEP": {"IN" : ["nsubj", "nsubjpass"]}},
+            "RIGHT_ATTRS": {"DEP": {"IN" : ["nsubj", "nsubjpass", "npadvmod"]}},
         },
         {
             "LEFT_ID": "anchor_aux",
