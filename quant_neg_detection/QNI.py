@@ -54,11 +54,12 @@ def dependency_exists(sentence: str, quant_segment: str):
     if matches:
         for match in matches: # Looks through all case of matches
             match_id, token_ids = match
-            noun_subject_index = token_ids[1]
+            noun_subject_index = doc[token_ids[1]]
 
             if debugging:
                     print("-"*36)
                     print(token_ids)
+                    print(quant_segment)
                     for i in range(len(token_ids)):
                         print(dp.aux_pattern[i]["RIGHT_ID"] + ":", doc[token_ids[i]].text)
                     print("-" * 36)
@@ -66,11 +67,9 @@ def dependency_exists(sentence: str, quant_segment: str):
             # if doc[noun_subject_index].text == token.text:
             #     return True
 
-            if doc[noun_subject_index].text in quant_segment:
+            if noun_subject_index.text in quant_segment \
+                    and token_ids[1] < token_ids[0]:
                 return True
-
-            else:
-                pass
 
     return False
 
