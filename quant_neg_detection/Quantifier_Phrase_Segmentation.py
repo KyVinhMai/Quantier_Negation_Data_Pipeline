@@ -1,8 +1,9 @@
 import spacy
+from spacy.tokens.doc import Doc
 from spacy.matcher import Matcher, DependencyMatcher
 spacy.prefer_gpu()
 import en_core_web_sm
-import dependency_patterns as dp
+import quant_neg_detection.dependency_patterns as dp
 
 nlp = en_core_web_sm.load()
 
@@ -33,7 +34,7 @@ def is_quantifier_word(token, quantifier: str) -> str or None:
 
     return None
 
-def find_index(token, doc: nlp) -> int or None:
+def find_index(token, doc: Doc) -> int or None:
     matcher = Matcher(nlp.vocab)
     pattern = [{"LOWER": token.text.lower()}]
     matcher.add("Word_index", [pattern])
@@ -45,7 +46,7 @@ def find_index(token, doc: nlp) -> int or None:
 
     return None
 
-def neighbor_is_adverb(token, index:int, doc: nlp) -> bool:
+def neighbor_is_adverb(token, index:int, doc: Doc) -> bool:
     """
     Rejects the if second word is adverb ex. Every now and then...
     """
@@ -54,7 +55,7 @@ def neighbor_is_adverb(token, index:int, doc: nlp) -> bool:
     if word_neighbor.pos_ == "ADV" and token.pos_ == "advmod":
         return True
 
-def possessive_exists(token, index:int, doc: nlp) -> str:
+def possessive_exists(token, index:int, doc: Doc) -> str:
     neighbor = doc[index].nbor()
 
     """
@@ -75,7 +76,7 @@ def possessive_exists(token, index:int, doc: nlp) -> str:
 
     return token.text
 
-def is_quantifier_noun(token, doc: nlp):#Todo use matcher to find the index
+def is_quantifier_noun(token, doc: Doc):#Todo use matcher to find the index
     """
     Detects if the quantifier is quantifying a noun.
     """
@@ -90,7 +91,7 @@ def is_quantifier_noun(token, doc: nlp):#Todo use matcher to find the index
         noun = anchors[0]
         return doc[quant:noun + 1].text
 
-def is_quantifier_phrase(quantifier: str, doc: nlp):
+def is_quantifier_phrase(quantifier: str, doc: Doc):
     """
     quantifier: token
     sentence: doc object
@@ -119,7 +120,7 @@ def is_quantifier_phrase(quantifier: str, doc: nlp):
 
     return None
 
-def find_quantifier_category(token, quantifier: str,  doc: nlp) -> str or None:
+def find_quantifier_category(token, quantifier: str,  doc: Doc) -> str or None:
     """
     token: Word detected, which contains the quantifier inside the string
     quantifier: The quantifier we are searching for

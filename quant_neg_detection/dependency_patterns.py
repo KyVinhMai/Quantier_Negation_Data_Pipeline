@@ -16,7 +16,7 @@ aux_pattern = [
             "LEFT_ID": "anchor_aux",
             "REL_OP": ">",
             "RIGHT_ID": "noun_subject",
-            "RIGHT_ATTRS": {"DEP": {"IN" : ["nsubj", "nsubjpass", "npadvmod"]}},
+            "RIGHT_ATTRS": {"DEP": {"IN" : ["nsubj", "nsubjpass", "npadvmod", "advmod"]}},
         },
         {
             "LEFT_ID": "anchor_aux",
@@ -26,30 +26,32 @@ aux_pattern = [
         },
     ]
 
-verb_pattern = [
-    {
-        "RIGHT_ID": "anchor_verb",
-        "RIGHT_ATTRS": {"POS": "VERB"}
-    },
-    {
-        "LEFT_ID": "anchor_verb",
-        "REL_OP": ">",
-        "RIGHT_ID": "noun_subject",
-        "RIGHT_ATTRS": {"DEP": "nsubj"},
-    },
-    {
-        "LEFT_ID": "anchor_verb",
-        "REL_OP": ">",
-        "RIGHT_ID": "aux_word",
-        "RIGHT_ATTRS": {"DEP": "aux"},
-    },
-    {
-        "LEFT_ID": "anchor_verb",
-        "REL_OP": ">",
-        "RIGHT_ID": "negation_word",
-        "RIGHT_ATTRS": {"DEP": "neg", "POS": "PART"},
-    }
-]
+ccomp_pattern = [
+        {
+            "RIGHT_ID": "anchor_aux",
+            "RIGHT_ATTRS": {"POS": {"IN": ["AUX", "VERB"]}}
+        },
+        {
+            "LEFT_ID": "anchor_aux",
+            "REL_OP": ">",
+            "RIGHT_ID": "noun_subject",
+            "RIGHT_ATTRS": {"DEP": {"IN" : ["nsubj", "nsubjpass"]}},
+        },
+        {
+            "LEFT_ID": "anchor_aux",
+            "REL_OP": ">",
+            "RIGHT_ID": "complement",
+            "RIGHT_ATTRS": {"DEP": "xcomp", "POS": "VERB"},
+        },
+        {
+            "LEFT_ID": "complement",
+            "REL_OP": ">",
+            "RIGHT_ID": "negation_particle",
+            "RIGHT_ATTRS": {"DEP": "neg"},
+        },
+ ]
+
+
 def of_pattern(quantifier: str) -> list[dict]:
     of_pattern = [
             {
