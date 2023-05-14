@@ -1,9 +1,9 @@
-import quant_neg_detection.dependency_patterns as dp
+import dependency_patterns as dp
 import en_core_web_trf
-import quant_neg_detection.Quantifier_Phrase_Segmentation as qps
+import Quantifier_Phrase_Segmentation as qps
 import spacy
 from spacy.matcher import DependencyMatcher
-spacy.prefer_gpu()
+spacy.require_gpu()
 nlp = en_core_web_trf.load(exclude=["lemmatizer"])
 print('INFO: spaCy initialized successfully.')
 # Quantifier Negation Sentence Identifier

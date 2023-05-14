@@ -3,7 +3,7 @@ import NPR_webscraper as npr
 import SQL_functions as sql
 from spacy.tokens import Doc
 import spacy
-spacy.prefer_gpu()
+spacy.require_gpu()
 import en_core_web_sm
 from functools import partial
 import sqlite3
@@ -11,6 +11,7 @@ import logging
 import sys
 sys.path.insert(0, r'D:\Research_Projects\Quantifer-Negation\Quantier_Negation_Data_Pipeline\quant_neg_detection')
 import QNI
+import re
 
 nlp = en_core_web_sm.load()
 
@@ -27,7 +28,7 @@ logging.basicConfig(
     filemode= "w"
 )
 
-quantifiers = ['every'] #todo clean this up
+quantifiers = ['every', 'any', "some"] #todo clean this up
 
 link_table_keys = {
     "link": [0],
@@ -36,6 +37,21 @@ link_table_keys = {
     "transcript":[3],
     "batches":[4]
 }
+
+def rm_nonlexical_items(text: str) -> str:
+    """
+    Removes items like speaker, words inbetween parentheses, etc.
+     examples:
+
+     ANDREW LIMBONG, HOST:
+     (SOUNDBITE OF MUSIC)
+     RONALD DEIBERT:
+     MICHEL MARTIN, BYLINE:
+     (SOUNDBITE OF GENERATOR WHIRRING)TIM MAK, BYLINE:
+    """
+    pattern = re.compile("(([A-Z]+(\-| )[A-Z]+)+(?:\, [A-Z]+)*|[A-Z]+)\:|\([^)]*\)")
+    return re.sub(pattern, "", text)
+
 
 def validate_quant_neg(link_row: str, extract_meta_data, ID: int):
     """
@@ -49,7 +65,7 @@ def validate_quant_neg(link_row: str, extract_meta_data, ID: int):
     try:
         print(f"- Reading {article_url}")
         transcript = Doc(nlp.vocab).from_json(doc_json)
-        sentences = [sentence.text for sentence in transcript.sents]
+        sentences = [rm_nonlexical_items(sentence.text) for sentence in transcript.sents]
         title = extract_meta_data(soup)
 
         quants, matches, indices = QNI.find_quantifier_negation(sentences, quantifiers) #todo remove all text
