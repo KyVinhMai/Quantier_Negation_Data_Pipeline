@@ -18,23 +18,41 @@ for file in directory_path.iterdir():
                 sentences.append(line.rstrip('\n'))
             quantifier_data_files[file.stem] = sentences
 
-class Every_Neg_Detectiontest(unittest.TestCase):
+# class Every_Neg_Detectiontest(unittest.TestCase):
+#     def test_detect_every_is_quantifier_negation_positives(self):
+#         self.quant = ["every"]
+#         self.dataset = quantifier_data_files["every_positives"]
+#
+#         cases = [QNI.is_quantifier_negation(line, self.quant) for line in self.dataset]
+#         print(cases)
+#         print(len([quant for quant in cases if quant is True]))
+#         # try:
+#         #     self.assertEqual(len([quant for quant in cases if quant is True]), 391)
+#         # except AssertionError:
+#         try:
+#             for line in self.dataset:
+#                 if QNI.is_quantifier_negation(line, self.quant) != True:
+#                     raise Exception
+#         except Exception:
+#             print(
+#                 f"AssertError Is Quantifier Negation: *Line {self.dataset.index(line)}* - {line}")
+
+class Some_Neg_Detectiontest(unittest.TestCase):
     def test_detect_every_is_quantifier_negation_positives(self):
-        self.quant = ["every"]
-        self.dataset = quantifier_data_files["every_positives"]
+        self.quant = ["some"]
+        self.dataset = quantifier_data_files["some_positives"]
 
         cases = [QNI.is_quantifier_negation(line, self.quant) for line in self.dataset]
-        print(cases)
+        # print(len(cases))
         print(len([quant for quant in cases if quant is True]))
-        # try:
-        #     self.assertEqual(len([quant for quant in cases if quant is True]), 391)
-        # except AssertionError:
-        try:
-            for line in self.dataset:
-                self.assertEqual(QNI.is_quantifier_negation(line, self.quant), True)
-        except AssertionError:
-            print(
-                f"AssertError Is Quantifier Negation: *Line {self.dataset.index(line)}* - {line}")
+
+        for line in self.dataset:
+            try:
+                if QNI.is_quantifier_negation(line, self.quant) != True:
+                    raise Exception
+            except Exception:
+                print(
+                    f"AssertError Is Quantifier Negation: *Line {self.dataset.index(line)}* - {line}")
 
     # def test_reject_every_negatives(self):
     #     self.dataset = quantifier_data_files["every_negatives"]
@@ -82,28 +100,6 @@ class Every_Neg_Detectiontest(unittest.TestCase):
 #
 #     def test_identify_continuous(self):
 #         pass
-
-# class Some_Neg_Detectiontest(unittest.TestCase):
-#     def test_detect_every_is_quantifier_negation_positives(self):
-#         self.quant = ["some"]
-#         self.dataset = quantifier_data_files["some_match_actual"]
-#
-#         cases = [line for line in self.dataset if QNI.is_quantifier_negation(line, self.quant) == False]
-#         print(len(cases))
-#         for case in cases:
-#             print(case)
-        # try:
-        #     print(len([quant for quant in cases if quant is True]))
-        #     self.assertEqual(len([quant for quant in cases if quant is True]), 390)
-        # except AssertionError:
-        #     try:
-        #         for line in self.dataset:
-        #             self.assertEqual(QNI.is_quantifier_negation(line, self.quant), True)
-        #     except AssertionError:
-        #         print(
-        #             f"AssertError Is Quantifier Negation: *Line {self.dataset.index(line)}* - {line}")
-        #     pass
-
 
 if __name__ == "__main__":
     unittest.main()

@@ -16,7 +16,7 @@ aux_pattern = [
             "LEFT_ID": "anchor_aux",
             "REL_OP": ">",
             "RIGHT_ID": "noun_subject",
-            "RIGHT_ATTRS": {"DEP": {"IN" : ["nsubj", "nsubjpass", "npadvmod", "advmod"]}},
+            "RIGHT_ATTRS": {"DEP": {"IN" : ["nsubj", "nsubjpass"]}},
         },
         {
             "LEFT_ID": "anchor_aux",
@@ -51,6 +51,63 @@ ccomp_pattern = [
         },
  ]
 
+#somebody was going to listen to me and not judge me
+xcomp_pattern = [
+        {
+            "RIGHT_ID": "anchor_verb",
+            "RIGHT_ATTRS": {"POS": "VERB"}
+        },
+        {
+            "LEFT_ID": "anchor_verb",
+            "REL_OP": ">",
+            "RIGHT_ID": "noun_subject",
+            "RIGHT_ATTRS": {"DEP": {"IN" : ["nsubj", "nsubjpass"]}},
+        },
+        {
+            "LEFT_ID": "anchor_verb",
+            "REL_OP": ">",
+            "RIGHT_ID": "xcomp_verb",
+            "RIGHT_ATTRS": {"DEP": "xcomp", "POS": "VERB"},
+        },
+        {
+            "LEFT_ID": "xcomp_verb",
+            "REL_OP": ">",
+            "RIGHT_ID": "anchor_actual_negation_phrase",
+            "RIGHT_ATTRS": {"DEP": "conj", "POS": "VERB"},
+        },
+        {
+            "LEFT_ID": "anchor_actual_negation_phrase",
+            "REL_OP": ">",
+            "RIGHT_ID": "negation_particle",
+            "RIGHT_ATTRS": {"DEP": "neg"},
+        },
+ ]
+
+#Some people will not only be looking for jobs
+advmod_on_neg_pattern = [
+        {
+            "RIGHT_ID": "anchor_aux",
+            "RIGHT_ATTRS": {"POS": "VERB"}
+        },
+        {
+            "LEFT_ID": "anchor_aux",
+            "REL_OP": ">",
+            "RIGHT_ID": "noun_subject",
+            "RIGHT_ATTRS": {"DEP": {"IN": ["nsubj", "nsubjpass"]}},
+        },
+        {
+            "LEFT_ID": "anchor_aux",
+            "REL_OP": ">",
+            "RIGHT_ID": "adv_only",
+            "RIGHT_ATTRS": {"DEP": "advmod", "POS": "ADV"},
+        },
+        {
+            "LEFT_ID": "adv_only",
+            "REL_OP": ">",
+            "RIGHT_ID": "negation_particle",
+            "RIGHT_ATTRS": {"DEP": "neg", "POS": "PART"},
+        },
+    ]
 
 def of_pattern(quantifier: str) -> list[dict]:
     of_pattern = [

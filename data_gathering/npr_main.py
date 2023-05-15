@@ -62,6 +62,7 @@ def validate_quant_neg(link_row: str, extract_meta_data, ID: int):
     article_url = link_row[0]; clauses = link_row[2]; doc_json = eval(link_row[3]); html = link_row[-1]
     soup = BeautifulSoup(html, "html.parser")
 
+    #todo inefficient, why are we converting doc.text into the function if we already have the doc?
     try:
         print(f"- Reading {article_url}")
         transcript = Doc(nlp.vocab).from_json(doc_json)

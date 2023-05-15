@@ -13,6 +13,8 @@ print('INFO: spaCy initialized successfully.')
 dependency_matcher = DependencyMatcher(nlp.vocab)
 dependency_matcher.add("find aux sentence type", [dp.aux_pattern])
 dependency_matcher.add("find ccomp sentence type", [dp.ccomp_pattern])
+dependency_matcher.add("find xcomp sentence type", [dp.xcomp_pattern])
+dependency_matcher.add("find advmod pattern sentence", [dp.advmod_on_neg_pattern])
 
 
 def get_quantifier(sentence: str, quantifiers: list[str]) -> tuple[Doc, str, str, str] or None:
@@ -123,8 +125,8 @@ def is_quantifier_negation(sentence: str, quantifiers: list[str]) -> bool:
 if __name__ == '__main__':
     sentence = ["And right now, well, I have to begin with a confession: I love maps.", " Because everybody who knew her and her kids thought she was highly devoted to them and can not conceive of her leaving her kids for any reason whatsoever. "]
     no_sentence = ["No! That isn't right."]
-    some_sentence = ['some of us might not notice']
+    anywhere_sentence = ["I mean, I don't think we'll ever feel comfortable with our kids being anywhere that isn't inside my home."]
     every_sentence = ["everyone else's fairy tale story - mine - really wasn't quite what they thought it was-"]
     any_sentence = ["Xi Jinping wants to make it very clear that he's not going anywhere and that people shouldn't spend time speculating about who comes next."]
-    print(find_quantifier_negation(any_sentence, ["any"]))
+    print(find_quantifier_negation(anywhere_sentence, ["anywhere"]))
 
