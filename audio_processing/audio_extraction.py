@@ -24,9 +24,6 @@ labels = bundle.get_labels()
 "Whisper Model"
 wh_model = whisper.load_model('base')
 
-#NOTE THE DIFFERENCE IN VARIABLE NAMES IN WHISPER AND
-# THE FORCE ALIGNER MODELS
-
 def main():
     table_data = io.query_data(cursor)
     for row in table_data:

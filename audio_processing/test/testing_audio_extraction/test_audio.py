@@ -52,7 +52,7 @@ def locate_and_splice(
     return whisper_transcript, new_audio_name
 
 
-def test_match_audio(audio_dir, json_transcript:str, quant, utterance, context):
+def test_match_audio(audio_dir, json_transcript: str, quant, utterance, context):
     whisper_transcript, spliced_audio_name = locate_and_splice(
         audio_directory=audio_dir,
         context_target=context,
@@ -66,7 +66,7 @@ def test_match_audio(audio_dir, json_transcript:str, quant, utterance, context):
 
     print(match_path)
 
-def test_context_audio(audio_dir, json_transcript:str, quant, utterance, context):
+def test_context_audio(audio_dir, json_transcript: str, quant, utterance, context):
     whisper_transcript, spliced_audio_name = locate_and_splice(
         audio_directory=audio_dir,
         context_target=context,
@@ -81,10 +81,10 @@ def test_context_audio(audio_dir, json_transcript:str, quant, utterance, context
 
 
 def extract_match_audio(
-        target_utt:str,
+        target_utt: str,
         whisper_transcript,
-        audio_fragment:str,
-        quantifier:str) -> str:
+        audio_fragment: str,
+        quantifier: str) -> str:
 
     "Trim audio down to a sentence"
     start, end = md.whisper_time_stamps(target_utt, whisper_transcript)  # Get time stamps
