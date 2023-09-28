@@ -69,7 +69,7 @@ def locate_and_splice(audio_directory:str,
     target_con = pf.rm_nonlexical_items(context_target)
 
     "Splice audio"
-    context_loc = lf.localize_context(sentences, target_con)  # Find where in the text the sentence could be
+    context_loc = lf.localize_context(sentences, target_con)  # Finds where in the text the sentence could be
     audio_segment = pf.splice_audio(audio_directory, context_loc)  # Splice audio
     spliced_audio_name, _ = io.write_audio(audio_segment, audio_directory, "segment")  # Put into audio directory
     whisper_transcript = wh_model.transcribe(spliced_audio_name)  # Get transcript

@@ -22,7 +22,7 @@ def splice_audio(audio_dir:str, audio_len: float, loc: tuple[float,float]): #-> 
     assert None not in loc, "Splice_audio: Location Indices have no value"
     audio_file = AudioSegment.from_mp3(audio_dir)
 
-    def padding(loc: tuple[float,float]) -> list:
+    def padding(loc: tuple[float, float]) -> list:
         indices = list(loc)
         indices[0] = indices[0] - 0.1 if not (indices[0] - 0.1) < 0 else indices[0]
         indices[1] = indices[1] + 0.1 if not (indices[1] + 0.1) > 1 else indices[1]

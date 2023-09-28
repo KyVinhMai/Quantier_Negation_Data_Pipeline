@@ -29,7 +29,7 @@ def QN_last_ID(cursor) -> tuple:
     return cursor.fetchone()
 
 def select_batch(cursor, conn, batch_num:str) -> iter:
-    data_iter = cursor.execute('''SELECT * FROM links WHERE batches = 1;''') #todo remove unnecessaray columns
+    data_iter = cursor.execute('''SELECT * FROM links WHERE batches = 2;''') #todo remove unnecessaray columns
     conn.commit()
     return data_iter
 

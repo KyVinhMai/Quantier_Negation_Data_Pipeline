@@ -39,9 +39,11 @@ def locate_and_splice(
         context_target: list[str],
         json_transcript: str) -> tuple[dict, str]:
 
+    #todo Not happy with preprocessing sentences here.
+    #Especially when we're preprocessing only for NPR transcripts
     sentences = pf.load_jsondoc(json_transcript)
     target_con = [pf.rm_nonlexical_items(sent) for sent in context_target]
-    audio_len = pf.return_audio_len(audio_directory) # Duration in seconds
+    audio_len = pf.return_audio_len(audio_directory)# Duration in seconds
 
     "Splice audio"
     context_location = lf.localize_context(sentences, target_con)  # Find where in the text the sentence could be

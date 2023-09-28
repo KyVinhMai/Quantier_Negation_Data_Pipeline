@@ -94,10 +94,10 @@ def validate_quant_neg(link_row: str, extract_meta_data, ID: int):
     return ID
 
 def main():
-    data_iter = iter([row for row in sql.select_batch(cursor, conn, batch_num="1")])
+    data_iter = iter([row for row in sql.select_batch(cursor, conn, batch_num="2")])
     ID = sql.QN_last_ID(cursor)
     if ID == None:
-        ID = 500
+        ID = 440
     else:
         ID = ID[0]
 

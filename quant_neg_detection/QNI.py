@@ -1,6 +1,6 @@
-import quant_neg_detection.dependency_patterns as dp
+import dependency_patterns as dp
 import en_core_web_trf
-import quant_neg_detection.Quantifier_Phrase_Segmentation as qps
+import Quantifier_Phrase_Segmentation as qps
 import spacy
 from spacy.tokens.doc import Doc
 from spacy.matcher import DependencyMatcher

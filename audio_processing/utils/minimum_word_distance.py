@@ -1,4 +1,4 @@
-from utils.preprocessing_functions import split_rm_punct
+from audio_processing.utils.preprocessing_functions import split_rm_punct
 
 def minimum_word_length(segment:[str], sentence_target:[str], first_word:str) -> bool:
     """
@@ -14,7 +14,7 @@ def minimum_word_length(segment:[str], sentence_target:[str], first_word:str) ->
     Loops through both sentences simultaneously
     """
     index = segment.index(first_word)
-    assert index is not None, "Index not found"
+    assert index is not None, "Word should be found in segment. Index not found"
 
     result = True
     for i in range(len(sentence_target)):
@@ -37,8 +37,8 @@ def whisper_time_stamps(utterance: str, whisper_transcript: dict) -> tuple[float
     first word, and then matches the rest of the utterance sentence to the
     sentence.
 
-    raw_result[segments] = list of dictionaries
-    segment["text"]
+    whisper_transcript["segments"] = list of dictionaries
+    segment["text"] =
 
     Ex.  {'
     id': 3,
