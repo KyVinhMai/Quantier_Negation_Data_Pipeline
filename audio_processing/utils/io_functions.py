@@ -25,8 +25,11 @@ def write_audio(audio: AudioSegment, audio_dir:str, type:str) -> tuple[str, str]
     trimmed_audio_path = str(Path.cwd()) + '\\' + title
     return title, trimmed_audio_path
 
-def move_to_processed_folder(audio_path, destination_path) -> str:
+def move_to_processed_folder(audio_path, destination_path: str) -> str:
     "Moves audio to processed subfolder"
     new_destination = destination_path + "\\processed_audio"
-    shutil.move(audio_path, new_destination)
+
+    shutil.copy(audio_path, new_destination)
+
+
     return new_destination

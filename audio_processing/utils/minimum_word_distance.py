@@ -13,6 +13,7 @@ def minimum_word_length(segment:[str], sentence_target:[str], first_word:str) ->
 
     Loops through both sentences simultaneously
     """
+    print(segment, first_word)
     index = segment.index(first_word)
     assert index is not None, "Word should be found in segment. Index not found"
 

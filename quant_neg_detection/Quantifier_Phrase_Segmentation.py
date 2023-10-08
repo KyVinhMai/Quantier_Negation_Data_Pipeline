@@ -10,7 +10,7 @@ nlp = en_core_web_sm.load()
 """
 The goal of the Quantifier Phrase Segmentation is to find the full quantifier 
 phrase in length. This includes any possessive's or conjunctions. This is so that
-the QNI can definitely say that the negation dependency is being applied to 
+the QNI can confidently say that the negation dependency is being applied to 
 the quantifier itself
 """
 

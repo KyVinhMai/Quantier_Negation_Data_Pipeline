@@ -11,6 +11,7 @@ import logging
 import sys
 sys.path.insert(0, r'D:\Research_Projects\Quantifer-Negation\Quantier_Negation_Data_Pipeline\quant_neg_detection')
 import QNI
+import json
 import re
 
 nlp = en_core_web_sm.load()
@@ -59,7 +60,7 @@ def validate_quant_neg(link_row: str, extract_meta_data, ID: int):
     extract_transcript: function
     extract_meta_data: function
     """
-    article_url = link_row[0]; clauses = link_row[2]; doc_json = eval(link_row[3]); html = link_row[-1]
+    article_url = link_row[0]; clauses = link_row[2]; doc_json = json.loads(link_row[3]); html = link_row[-1]
     soup = BeautifulSoup(html, "html.parser")
 
     #todo inefficient, why are we converting doc.text into the function if we already have the doc?
@@ -78,13 +79,14 @@ def validate_quant_neg(link_row: str, extract_meta_data, ID: int):
                     export_QN(ID, quants[i], "NONE", context, title, clauses, article_url, "NONE", matches[i])
                     ID += 1
                     conn.commit()
+
             except sqlite3.Error as er:
                 logging.error(
                 f"""{'_'*40}
                 Article ~ qn_sentences db: {title}
                 SQL {(' '.join(er.args))}
                 {'_'*40}""",
-                    exc_info=True
+                exc_info=True
                 )
 
     #Custom except for finding no quantifier negations

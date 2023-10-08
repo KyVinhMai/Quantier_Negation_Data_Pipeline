@@ -16,6 +16,7 @@ dependency_matcher.add("find ccomp sentence type", [dp.ccomp_pattern])
 dependency_matcher.add("find xcomp sentence type", [dp.xcomp_pattern])
 dependency_matcher.add("find advmod pattern sentence", [dp.advmod_on_neg_pattern])
 
+debugging = False
 
 def get_quantifier(sentence: str, quantifiers: list[str]) -> tuple[Doc, str, str, str] or None:
     def get_negation(doc: Doc) -> int:
@@ -48,14 +49,13 @@ def get_quantifier(sentence: str, quantifiers: list[str]) -> tuple[Doc, str, str
     return None, None, None, None
 
 def dependency_exists(sentence: str, quant_segment: str):
-    debugging = False
     doc = nlp(sentence)
     matches = dependency_matcher(doc)
     quant_segment = quant_segment.split(" ")
 
     if matches:
         for match in matches: # Looks through all case of matches
-            match_id, token_ids = match
+            _, token_ids = match
             noun_subject_index = doc[token_ids[1]]
 
             if debugging:
@@ -81,7 +81,7 @@ def is_standalone(sentence, quantifiers):
 def find_quantifier_negation(sentences: list[str], quantifiers) -> tuple[list, list, list]:
     print('INFO: Beginning search for quantifier + negation statements.')
     print("=" * 60, "\n")
-    quants = []; sents = []; standalone = []; indices = []; errors = []
+    quants = []; sents = []; standalone = []; indices = []
     i = 0
 
     for candidate in sentences:

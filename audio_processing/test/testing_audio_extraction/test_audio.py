@@ -1,6 +1,11 @@
 import whisper
 import torch, torchaudio
 import sys
+from pathlib import Path
+from dataclasses import dataclass
+import spacy
+nlp = spacy.load('en_core_web_sm')
+import time
 sys.path.insert(0, r"D:\Research_Projects\Quantifer-Negation\Quantier_Negation_Data_Pipeline")
 sys.path.insert(0, r"D:\Research_Projects\Quantifer-Negation\Quantier_Negation_Data_Pipeline\audio_processing")
 from audio_processing.utils import io_functions as io, minimum_word_distance as md
@@ -12,18 +17,18 @@ from audio_processing import force_aligner as fa
 # import force_aligner as fa
 
 
-Audio_folder_path = "E:\\AmbiLab_data\\Audio"
+Audio_folder_path = "D:\Research_Projects\Quantifer-Negation\Quantier_Negation_Data_Pipeline\\audio_processing\\test\\testing_audio_extraction"
 
 "Wav2Vec Model"
 torch.random.manual_seed(0)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda") # if torch.cuda.is_available() else "cpu")
 
 bundle = torchaudio.pipelines.WAV2VEC2_ASR_LARGE_960H
 fa_model = bundle.get_model().to(device)
 labels = bundle.get_labels()
 
 "Whisper Model"
-wh_model = whisper.load_model('base')
+wh_model = whisper.load_model('medium.en')
 
 def test_splice(audio_dir, json_transcript:str, quant, utterance, context):
     whisper_transcript, spliced_audio_name = locate_and_splice(
@@ -50,6 +55,8 @@ def locate_and_splice(
     audio_segment = pf.splice_audio(audio_directory, audio_len, context_location)  # Splice audio
     new_audio_name, _ = io.write_audio(audio_segment, audio_directory, "segment")  # Put into audio directory
     whisper_transcript = wh_model.transcribe(new_audio_name)  # Get transcript
+
+    print(f"> Generated {new_audio_name}")
 
     return whisper_transcript, new_audio_name
 
@@ -122,12 +129,53 @@ def extract_context_audio(audio_fragment, context_target: list[str], whisper_tra
 
     print(trimmed_audio_name, trimmed_path)
 
+@dataclass
+class Audio_file:
+    audio_path: str
+    utterance: str
+    transcript: str
+    context_t: list[str]
+    quant: str
+
+def get_audio_test_data(data_path: Path):
+    audio_folders = [f for f in data_path.iterdir() if f.is_dir() and f.name != "processed_audio"]
+    unit_test_data = []
+
+    for folder in audio_folders:
+        audio_path = [str(f) for f in folder.iterdir() if f.name[-4:] == ".mp3"][0]
+        folder_path = str(folder)
+
+        with open(folder_path + "\\utterance.txt", "r") as f:
+            utt = f.read()
+
+        with open(folder_path + "\\transcript.txt", "r") as f:
+            json_transcript = f.read()
+
+        with open(folder_path + "\\context.txt", "r") as f:
+            context = f.read()
+            context_t = [i.text for i in nlp(context).sents]
+
+        with open(folder_path + "\\quant.txt", "r") as f:
+            quant = f.read()
+
+        data = Audio_file(audio_path,
+                   utt,
+                   json_transcript,
+                   context_t,
+                   quant
+                   )
+
+        unit_test_data.append(data)
+
+    return unit_test_data
 
 
 if __name__ == "__main__":
     test1 = False
     test2 = False
-    test3 = True
+    test3 = False
+    Automate_test = True
+
     if test1:
         laptop_audio = "C:\\Users\\kyvin\\PycharmProjects\\QuantNeg_Webcrawler\\audio_processing\\npr_evictions.mp3"
         utterance = "Financial help is available, but maybe somebody doesn't apply or the assistance never comes through."
@@ -163,6 +211,23 @@ if __name__ == "__main__":
         quant = "everything"
         # test_match_audio(audio_name, json_transcript, quant, utterance, context_t)
         test_context_audio(audio_name, json_transcript, quant, utterance, context_t)
+
+    if Automate_test:
+        data = get_audio_test_data(data_path= Path(Audio_folder_path))
+        total_time = 0
+        for d in data:
+
+            start = time.time()
+            test_match_audio(d.audio_path, d.transcript, d.quant, d.utterance, d.context_t)
+            end = time.time()
+            total_time += end - start
+
+            print(f"{end - start} seconds has elasped")
+
+        print(f"Program took {total_time} to compute.")
+
+
+
 
 
     # extract_match(audio, utterance2, "somebody")
