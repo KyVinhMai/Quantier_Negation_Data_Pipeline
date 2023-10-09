@@ -1,4 +1,5 @@
 import dependency_patterns as dp
+from not_because_dependency_patterns import not_because_match_patterns, not_because_forbidden_patterns
 import en_core_web_trf
 import Quantifier_Phrase_Segmentation as qps
 import spacy
@@ -15,6 +16,13 @@ dependency_matcher.add("find aux sentence type", [dp.aux_pattern])
 dependency_matcher.add("find ccomp sentence type", [dp.ccomp_pattern])
 dependency_matcher.add("find xcomp sentence type", [dp.xcomp_pattern])
 dependency_matcher.add("find advmod pattern sentence", [dp.advmod_on_neg_pattern])
+
+"Initialize Not-Because Dependency Matcher"
+not_because_matcher = DependencyMatcher(nlp.vocab)
+not_because_matcher.add("find match patterns", not_because_match_patterns)
+not_because_forbidden = DependencyMatcher(nlp.vocab)
+not_because_forbidden.add("find forbidden patterns", not_because_forbidden_patterns)
+print("INFO: Not-because matchers initialized successfully.")
 
 debugging = False
 
@@ -120,6 +128,57 @@ def is_quantifier_negation(sentence: str, quantifiers: list[str]) -> bool:
 
     return dependency_exists(sentence, quant_text)
 
+# Jordan: function copied from NBI.py
+def not_because_exists(doc: nlp) -> bool:
+    """Ensure input sentence in nlp format has negation followed by "because" later in the sentence. """
+    negation_i = -1
+    because_i = -1
+    doc_len = len(doc)
+    # Get index of first negation
+    for i, token in enumerate(doc):
+        token_str = token.text.lower()
+        if token_str == "not" or token_str == "n't":
+            negation_i = i
+            break
+    # Get index of last because
+    for i in range(doc_len - 1, -1, -1):
+        token_str = doc[i].text.lower()
+        if token_str == "because":
+            because_i = i
+            break
+    if -1 < negation_i < because_i:
+        return True
+    else:
+        return False
+
+# Jordan: new function based on NBI.py lines 105-117
+def not_because_dependency_exists(sentence: str):
+    doc = nlp(sentence)
+    match = not_because_matcher(doc) and not not_because_forbidden(doc) and not (
+            "whether or not" in sentence) and not sentence.startswith(
+            "Not because") and not_because_exists(doc)
+    return match
+
+# Jordan: Got rid of variables & function calls not needed for not-because.
+# Jordan: Kept quants variable to prevent bugs down the line.
+def find_not_because(sentences: list[str], quantifiers) -> tuple[list, list, list]:
+    print('INFO: Beginning search for negation + because statements.')
+    print("=" * 60, "\n")
+    quants = []; sents = []; indices = []
+    i = 0
+
+    for candidate in sentences:
+        if not_because_dependency_exists(candidate):
+            quants.append("negation + because")
+            sents.append(candidate)
+            indices.append(i)
+
+            i = i+1
+            print(">>>>>> ", candidate, "<<<<<<<")
+
+    print("\n", "="*60)
+    print('INFO: Search completed with ' + str(len(sents)) + ' potential negation + because.')
+    return quants, sents, indices
 
 
 if __name__ == '__main__':

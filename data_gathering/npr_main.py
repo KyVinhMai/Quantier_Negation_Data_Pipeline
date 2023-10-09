@@ -70,6 +70,7 @@ def validate_quant_neg(link_row: str, extract_meta_data, ID: int):
         sentences = [rm_nonlexical_items(sentence.text) for sentence in transcript.sents]
         title = extract_meta_data(soup)
 
+        # Jordan: Replace find_quantifier_negation with find_not_because when doing not-because sentences.
         quants, matches, indices = QNI.find_quantifier_negation(sentences, quantifiers) #todo remove all text
         if matches:
             context = QNI.get_context(sentences, indices)
