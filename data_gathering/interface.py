@@ -1,5 +1,5 @@
 import NPR_webscrawler
-import npr_main
+import Ambiguity_Search
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = "Replace entities with an assigned substitutes")

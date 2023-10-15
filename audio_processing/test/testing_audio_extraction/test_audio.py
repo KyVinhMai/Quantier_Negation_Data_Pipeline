@@ -9,7 +9,7 @@ import time
 sys.path.insert(0, r"D:\Research_Projects\Quantifer-Negation\Quantier_Negation_Data_Pipeline")
 sys.path.insert(0, r"D:\Research_Projects\Quantifer-Negation\Quantier_Negation_Data_Pipeline\audio_processing")
 from audio_processing.utils import io_functions as io, minimum_word_distance as md
-from audio_processing.utils import preprocessing_functions as pf, localization_functions as lf
+from audio_processing.utils import audio_preprocessing_functions as pf, localization_functions as lf
 from audio_processing import force_aligner as fa
 
 # from utils import io_functions as io, minimum_word_distance as md

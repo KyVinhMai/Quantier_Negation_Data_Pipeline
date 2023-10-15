@@ -1,4 +1,4 @@
-from audio_processing.utils.preprocessing_functions import split_rm_punct
+from audio_processing.utils.audio_preprocessing_functions import split_rm_punct
 
 def minimum_word_length(segment:[str], sentence_target:[str], first_word:str) -> bool:
     """

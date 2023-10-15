@@ -161,6 +161,11 @@ def poss_pattern(orth: str) -> list[dict]:
 
 # Spacy often describes some nouns as adjectives. Like "veteran"
 def det_pattern(orth: str) -> list[dict]:
+    """
+    Checks that the quantifier is attached to a noun
+    > 10/9/2023 - for all neg attached predet
+
+    """
     det_pattern = [
             {
                 "RIGHT_ID": "anchor_noun",
@@ -170,7 +175,7 @@ def det_pattern(orth: str) -> list[dict]:
                 "LEFT_ID": "anchor_noun",
                 "REL_OP": ">",
                 "RIGHT_ID": "anchor_quant",
-                "RIGHT_ATTRS": {"DEP": "det", "POS": "DET", "ORTH": f"{orth}"}
+                "RIGHT_ATTRS": {"DEP": {"IN": ["det", "predet"]}, "POS": "DET", "ORTH": f"{orth}"}
             }
         ]
 

@@ -4,7 +4,7 @@ import torch
 import torchaudio
 import time
 from audio_processing.utils import io_functions as io, minimum_word_distance as md
-from audio_processing.utils import preprocessing_functions as pf, localization_functions as lf
+from audio_processing.utils import audio_preprocessing_functions as pf, localization_functions as lf
 from force_aligner import force_align
 
 Audio_folder_path = "E:\\AmbiLab_data\\Audio"
