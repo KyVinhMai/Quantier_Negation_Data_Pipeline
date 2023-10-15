@@ -11,12 +11,14 @@ class Test_table_formatting(unittest.TestCase):
         """
         df = pd.read_csv('main_links.tsv', delimiter='\t', usecols=["link", "audio_dir","clauses",	"transcript","batches","html"])
         df_row = df.sample(n=1)
-
-        row = link_item(df_row["link"].item(), df_row["audio_dir"].item(),
+        row_tuple = (df_row["link"].item(), df_row["audio_dir"].item(),
                         df_row["clauses"].item(), df_row["transcript"].item(),
                         df_row["batches"].item(),
                         df_row["html"].item())
-        print(row)
+
+        row = link_init(row_tuple)
+        print(type(row))
+
         assert(isinstance(row.clauses, int))
         assert(isinstance(row.sentences, list))
         for i in row.sentences:
