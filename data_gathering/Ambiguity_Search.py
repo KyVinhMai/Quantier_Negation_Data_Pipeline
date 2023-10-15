@@ -6,7 +6,7 @@ from utils.data_formatting import link_init, link_item
 import sqlite3
 import logging
 import quant_neg_detection.QNI as QNI
-import NPR_webscraper as npr
+from data_gathering.webcrawler import NPR_webscraper as npr
 
 "SQL Database"
 conn = sqlite3.connect(r'E:\AmbiLab_data\quant_neg_data.db')
@@ -36,7 +36,7 @@ def validate_quant_neg(r: Type[link_item], extract_meta_data: Callable, ID: int)
         title = extract_meta_data(soup)
 
         # Jordan: Replace find_quantifier_negation with find_not_because when doing not-because sentences.
-        quants, matches, indices = QNI.find_quantifier_negation(r.sentences, quantifiers)
+        quants, matches, indices = QNI.find_not_because(r.sentences, quantifiers)
 
         if matches:
             context = QNI.get_context(r.sentences, indices)
@@ -46,6 +46,8 @@ def validate_quant_neg(r: Type[link_item], extract_meta_data: Callable, ID: int)
                 for i in range(len(quants)):
                     export_QN(ID, quants[i], "NONE", context, title, r.clauses, r.link, "NONE", matches[i])
                     conn.commit()
+
+                    ID += 1
 
             except sqlite3.Error as er:
                 logging.error(
@@ -60,16 +62,16 @@ def validate_quant_neg(r: Type[link_item], extract_meta_data: Callable, ID: int)
     except AttributeError:
         logging.error(f"Issue with article: {r.link}")
 
+    return ID
+
 def main():
-    data_iter = sql.select_batch(cursor, conn)
+    data_iter = iter([row for row in sql.select_batch(cursor, conn)])
     ID = sql.QN_last_ID(cursor)
-    ID = 440 if ID is None else ID[0]
 
     articles = 0
     for link in data_iter:
         row = link_init(link)
-        validate_quant_neg(row, npr.extract_metadata, ID)
-        ID += 1
+        ID = validate_quant_neg(row, npr.extract_metadata, ID)
         articles += 1
 
     print(f"Read {articles} articles!")

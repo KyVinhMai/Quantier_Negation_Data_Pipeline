@@ -1,6 +1,3 @@
-import NPR_webscrawler
-import Ambiguity_Search
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = "Replace entities with an assigned substitutes")
     option = parser.add_mutually_exclusive_group(required=True)

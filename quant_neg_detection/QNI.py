@@ -7,7 +7,7 @@ import en_core_web_trf
 import spacy
 from spacy.tokens.doc import Doc
 from spacy.matcher import DependencyMatcher
-spacy.prefer_gpu()
+spacy.require_gpu()
 nlp = en_core_web_trf.load(exclude=["lemmatizer"])
 print('INFO: spaCy initialized successfully.')
 # Quantifier Negation Sentence Identifier
@@ -92,7 +92,6 @@ def find_quantifier_negation(sentences: list[str], quantifiers) -> tuple[list, l
     print('INFO: Beginning search for quantifier + negation statements.')
     print("=" * 60, "\n")
     quants = []; sents = []; standalone = []; indices = []
-    i = 0
 
     for candidate in sentences:
 
@@ -101,9 +100,8 @@ def find_quantifier_negation(sentences: list[str], quantifiers) -> tuple[list, l
         if token is not None and dependency_exists(candidate, quant_text):
             quants.append(quant_text) #todo change into quantifier category
             sents.append(candidate)
-            indices.append(i)
+            indices.append(sentences.index(candidate))
 
-            i = i+1
             print(">>>>>> ", candidate, "<<<<<<<")
 
     print("\n", "="*60)
@@ -169,15 +167,14 @@ def find_not_because(sentences: list[str], quantifiers) -> tuple[list, list, lis
     print('INFO: Beginning search for negation + because statements.')
     print("=" * 60, "\n")
     quants = []; sents = []; indices = []
-    i = 0
 
     for candidate in sentences:
+
         if not_because_dependency_exists(candidate):
             quants.append("negation + because")
             sents.append(candidate)
-            indices.append(i)
+            indices.append(sentences.index(candidate))
 
-            i = i+1
             print(">>>>>> ", candidate, "<<<<<<<")
 
     print("\n", "="*60)

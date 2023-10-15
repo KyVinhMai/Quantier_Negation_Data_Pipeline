@@ -36,13 +36,13 @@ def grab_latest_batch(cursor):
     num = cursor.execute('''SELECT * FROM links ORDER BY batches DESC LIMIT 1;''')
     return num
 
-def QN_last_ID(cursor) -> tuple:
+def QN_last_ID(cursor) -> int:
     "Gets last ID in the table"
     cursor.execute('''SELECT id FROM qn_sentences ORDER BY id DESC LIMIT 1;''')
-    return cursor.fetchone()
+    ID = cursor.fetchone()
+    return 440 if ID is None else ID[0]
 
 def select_batch(cursor, conn) -> iter:
-    data_iter = cursor.execute('''SELECT * FROM links;''') #todo remove unnecessaray columns
+    data_iter = cursor.execute('''SELECT * FROM links;''')
     conn.commit()
     return data_iter
-

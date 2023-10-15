@@ -6,7 +6,8 @@ import os.path
 from bs4 import BeautifulSoup
 from clause_counter import doc_count_clauses
 import SQL_functions as sql
-import NPR_webscraper as npr
+from data_gathering.webcrawler import NPR_webscraper as npr
+
 spacy.prefer_gpu()
 import en_core_web_sm
 import logging
