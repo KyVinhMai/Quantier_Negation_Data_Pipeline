@@ -21,9 +21,9 @@ logging.basicConfig(
     filemode="w"
 )
 
-quantifiers = ['every', 'any', "some"] #todo clean this up
+quantifiers = ['each'] #todo clean this up
 
-def validate_quant_neg(r: Type[link_item], extract_meta_data: Callable, ID: int):
+def validate_quant_neg(r: Type[link_item], extract_meta_data: Callable, ID: int, num: int):
     """
     article_url: actual url to website
     extract_transcript: function
@@ -32,11 +32,11 @@ def validate_quant_neg(r: Type[link_item], extract_meta_data: Callable, ID: int)
     soup = BeautifulSoup(r.html, "html.parser")
 
     try:
-        print(f"- Reading {r.link}")
+        print(f"- Reading {r.link} ({num})")
         title = extract_meta_data(soup)
 
         # Jordan: Replace find_quantifier_negation with find_not_because when doing not-because sentences.
-        quants, matches, indices = QNI.find_not_because(r.sentences, quantifiers)
+        quants, matches, indices = QNI.find_quantifier_negation(r.sentences, quantifiers)
 
         if matches:
             context = QNI.get_context(r.sentences, indices)
@@ -71,7 +71,7 @@ def main():
     articles = 0
     for link in data_iter:
         row = link_init(link)
-        ID = validate_quant_neg(row, npr.extract_metadata, ID)
+        ID = validate_quant_neg(row, npr.extract_metadata, ID, articles)
         articles += 1
 
     print(f"Read {articles} articles!")
