@@ -135,7 +135,7 @@ def find_quantifier_category(token, quantifier: str,  doc: Doc) -> str or None:
     index = find_index(token, doc)
     if index is None: return None;
 
-    if neighbor_is_adverb(token, index, doc):
+    if neighbor_is_adverb(token, index, doc): # Every now and then
         return None
 
     if is_quantifier_word(token, quantifier):

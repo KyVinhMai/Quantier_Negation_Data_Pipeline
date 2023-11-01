@@ -1,13 +1,11 @@
-import quant_neg_detection.dependency_patterns as dp
-from quant_neg_detection.not_because_dependency_patterns import \
-    not_because_match_patterns, \
-    not_because_forbidden_patterns
-import quant_neg_detection.Quantifier_Phrase_Segmentation as QPS
+import dependency_patterns as dp
+from not_because_dependency_patterns import not_because_match_patterns, not_because_forbidden_patterns
 import en_core_web_trf
+import Quantifier_Phrase_Segmentation as qps
 import spacy
 from spacy.tokens.doc import Doc
 from spacy.matcher import DependencyMatcher
-spacy.require_gpu()
+spacy.prefer_gpu()
 nlp = en_core_web_trf.load(exclude=["lemmatizer"])
 print('INFO: spaCy initialized successfully.')
 # Quantifier Negation Sentence Identifier
@@ -51,7 +49,7 @@ def get_quantifier(sentence: str, quantifiers: list[str]) -> tuple[Doc, str, str
                 neg_index = get_negation(doc) #Making the assumption that the quantifier comes before the negation
 
                 if neg_index:
-                    quant_text = QPS.find_quantifier_category(token, quantifier, doc[:neg_index])
+                    quant_text = qps.find_quantifier_category(token, quantifier, doc[:neg_index])
 
                     if quant_text: #Get the splice of the sentence before negation
                         return token, quantifier, doc[:neg_index], quant_text
@@ -92,16 +90,16 @@ def find_quantifier_negation(sentences: list[str], quantifiers) -> tuple[list, l
     print('INFO: Beginning search for quantifier + negation statements.')
     print("=" * 60, "\n")
     quants = []; sents = []; standalone = []; indices = []
+    i = 0
 
     for candidate in sentences:
-
         token, quant, neg_fragment, quant_text = get_quantifier(candidate, quantifiers)
-
         if token is not None and dependency_exists(candidate, quant_text):
             quants.append(quant_text) #todo change into quantifier category
             sents.append(candidate)
-            indices.append(sentences.index(candidate))
+            indices.append(i)
 
+            i = i+1
             print(">>>>>> ", candidate, "<<<<<<<")
 
     print("\n", "="*60)
@@ -122,7 +120,7 @@ def get_context(sentences, indices) -> str:
 
     return " ".join(ret)
 
-#For Unit Testing
+#For Testing
 def is_quantifier_negation(sentence: str, quantifiers: list[str]) -> bool:
     token, quantifier, neg_index, quant_text = get_quantifier(sentence, quantifiers)
     if token is None:
@@ -167,14 +165,15 @@ def find_not_because(sentences: list[str], quantifiers) -> tuple[list, list, lis
     print('INFO: Beginning search for negation + because statements.')
     print("=" * 60, "\n")
     quants = []; sents = []; indices = []
+    i = 0
 
     for candidate in sentences:
-
         if not_because_dependency_exists(candidate):
             quants.append("negation + because")
             sents.append(candidate)
-            indices.append(sentences.index(candidate))
+            indices.append(i)
 
+            i = i+1
             print(">>>>>> ", candidate, "<<<<<<<")
 
     print("\n", "="*60)
@@ -188,7 +187,5 @@ if __name__ == '__main__':
     anywhere_sentence = ["I mean, I don't think we'll ever feel comfortable with our kids being anywhere that isn't inside my home."]
     every_sentence = ["everyone else's fairy tale story - mine - really wasn't quite what they thought it was-"]
     any_sentence = ["Xi Jinping wants to make it very clear that he's not going anywhere and that people shouldn't spend time speculating about who comes next."]
-    all_neg = ["all the intervals in the scale are not equal"]
-    # print(find_quantifier_negation(anywhere_sentence, ["anywhere"]))
-    print(find_quantifier_negation(all_neg, ["all"]))
+    print(find_quantifier_negation(anywhere_sentence, ["anywhere"]))
 

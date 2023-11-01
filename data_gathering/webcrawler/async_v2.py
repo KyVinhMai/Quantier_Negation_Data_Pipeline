@@ -8,7 +8,7 @@ import spacy
 import os.path
 from bs4 import BeautifulSoup
 from clause_counter import doc_count_clauses
-import SQL_functions as sql
+import data_gathering.SQL_functions as sql
 import NPR_webscraper as npr
 spacy.prefer_gpu()
 import en_core_web_sm
@@ -76,10 +76,9 @@ async def grab_day_catalogue_links(session: ClientSession, day_catalogue: str):
             audio_task = await audio_to_dir(session, title, article_soup)
             audio_dir = audio_task
             clauses = doc_count_clauses(transcript)
-            #todo implement latest batch
 
             try:
-                sql.export_Link(cursor, link, audio_dir, clauses, str(transcript.to_json()), 1, str(article_soup))
+                sql.export_Link(cursor, link, audio_dir, clauses, str(transcript.to_json()), 1, str(article_soup), "Fresh Air")
                 conn.commit()
                 print("> Exported:", title)
             except sqlite3.Error as er:
@@ -160,7 +159,7 @@ async def get_scroll_links(scroll_link):
 def main():
     start = time.time()
 
-    scroll_link = "/programs/all-things-considered/archive?date=2022-12-27&eid=1145553073"
+    scroll_link = "/programs/fresh-air/archive?date=2023-09-26&eid=12017780103" #Replaced with Fresh Air
     asyncio.run(get_scroll_links("https://www.npr.org/" + scroll_link))
     conn.close()
 

@@ -9,14 +9,15 @@ def export_QuantNeg(cursor, Unique_ID:int, Quant: str, Match:str,
                          Quant, Match, Context, Title, Clauses, Link, Standalone, Utterance,"No"))
 
 
-def export_Link(cursor, Link:str, Audio_dir:str, Clauses:int, Transcript:str, Batch:int, html:str):
+def export_Link(cursor, Link:str, Audio_dir:str, Clauses:int, Transcript:str, Batch:int, html:str, show_title: str):
     cursor.execute('''INSERT INTO links VALUES(?,?,?,?,?, ?)''',
                    (Link,
                     Audio_dir,
                     Clauses,
                     Transcript,
                     Batch,
-                    html))
+                    html,
+                    show_title))
 
 
 def export_Audio(cursor, ID:int, Total_dur:float, match_dur:float,
