@@ -12,17 +12,21 @@ print('INFO: spaCy initialized successfully.')
 
 "Initialize Dependency Matcher"
 dependency_matcher = DependencyMatcher(nlp.vocab)
-dependency_matcher.add("find aux sentence type", [dp.aux_pattern])
-dependency_matcher.add("find ccomp sentence type", [dp.ccomp_pattern])
-dependency_matcher.add("find xcomp sentence type", [dp.xcomp_pattern])
-dependency_matcher.add("find advmod pattern sentence", [dp.advmod_on_neg_pattern])
+# dependency_matcher.add("find aux sentence type", [dp.aux_pattern])
+# dependency_matcher.add("find ccomp sentence type", [dp.ccomp_pattern])
+# dependency_matcher.add("find xcomp sentence type", [dp.xcomp_pattern])
+# dependency_matcher.add("find advmod pattern sentence", [dp.advmod_on_neg_pattern])
+dependency_matcher.add("find all negations", dp.qn_patterns("all"))
+# dependency_matcher.add("find all negations", dp.qn_patterns("every"))
+# dependency_matcher.add("find all negations", dp.qn_patterns("each"))
 
-"Initialize Not-Because Dependency Matcher"
-not_because_matcher = DependencyMatcher(nlp.vocab)
-not_because_matcher.add("find match patterns", not_because_match_patterns)
-not_because_forbidden = DependencyMatcher(nlp.vocab)
-not_because_forbidden.add("find forbidden patterns", not_because_forbidden_patterns)
-print("INFO: Not-because matchers initialized successfully.")
+# "Initialize Not-Because Dependency Matcher"
+# not_because_matcher = DependencyMatcher(nlp.vocab)
+# not_because_matcher.add("find match patterns", not_because_match_patterns)
+# not_because_forbidden = DependencyMatcher(nlp.vocab)
+# not_because_forbidden.add("find forbidden patterns", not_because_forbidden_patterns)
+
+print("INFO: Dependency matchers initialized successfully.")
 
 debugging = False
 
@@ -58,7 +62,19 @@ def get_quantifier(sentence: str, quantifiers: list[str]) -> tuple[Doc, str, str
 
 def dependency_exists(sentence: str, quant_segment: str):
     doc = nlp(sentence)
-    matches = dependency_matcher(doc)
+
+    # Hardcoding to weed out sentences with certain phrases
+    forbidden_phrases = []
+    if quant_segment.lower().startswith("all"):
+        forbidden_phrases.append("y'all")
+    for word in ["nearly", "almost", "most", "most of"]:
+        forbidden_phrases.append(word + " " + quant_segment)
+    forbidden_phrase_in_sentence = False
+    for phrase in forbidden_phrases:
+        if phrase in sentence.lower():
+            forbidden_phrase_in_sentence = True
+
+    matches = not forbidden_phrase_in_sentence and dependency_matcher(doc)
     quant_segment = quant_segment.split(" ")
 
     if matches:
