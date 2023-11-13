@@ -5,8 +5,9 @@ import spacy
 import os.path
 from bs4 import BeautifulSoup
 from clause_counter import doc_count_clauses
-import SQL_functions as sql
+import data_gathering.SQL_functions as sql
 from data_gathering.webcrawler import NPR_webscraper as npr
+from data_gathering.other_utils import *
 
 spacy.prefer_gpu()
 import en_core_web_sm
@@ -19,9 +20,9 @@ conn = sqlite3.connect(r'E:\AmbiLab_data\quant_neg_data.db')
 cursor = conn.cursor()
 
 headers = {"User-Agent":'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36'}
-hub_url = "https://www.npr.org/programs/all-things-considered/archive?date=12-31-2021"
-page = requests.get(hub_url, headers = headers)
-soup = BeautifulSoup(page.content, "html.parser")
+# hub_url = "https://www.npr.org/programs/all-things-considered/archive?date=12-31-2021"
+# page = requests.get(hub_url, headers = headers)
+# soup = BeautifulSoup(page.content, "html.parser")
 
 "LOGGING"
 logging.basicConfig(
@@ -29,31 +30,6 @@ logging.basicConfig(
     filename= "nprwebcrawler_issues.log",
     filemode= "w"
 )
-
-website_exceptions = []
-with open("cursed_websites.txt", "r") as f:
-    for line in f:
-        website_exceptions.append(line.rstrip())
-
-filetype_exceptions = []
-with open("cursed_filetypes.txt", "r") as f:
-    for line in f:
-        filetype_exceptions.append(line.rstrip())
-
-
-def check_url(url:str) -> bool:
-    for web_exc in website_exceptions:
-        if web_exc in url:
-            return False
-
-    return True
-
-def check_filetype(url: str) -> bool:
-    for exc in filetype_exceptions:
-        if exc in url:
-            return False
-
-    return True
 
 def audio_to_dir(title:str, soup) -> str or None:
     """
@@ -100,13 +76,13 @@ def grab_daylinks(day_link: str):
                 #todo implement latest batch
 
                 try:
-                    sql.export_Link(cursor, link, audio_dir, clauses, str(transcript.to_json()), 2, str(article_soup))
+                    sql.export_Link(cursor, link, audio_dir, clauses, str(transcript.to_json()), 2, str(article_soup), "Fresh Air")
                     conn.commit()
                     print("~", title)
                 except sqlite3.Error as er:
                     print("_" * 40)
                     print("Article ~ link db:", title)
-                    print("@ SQL", (' '.join(er.args)), "@")
+                    print("@ SQL ERROR", (' '.join(er.args)), "@")
                     print("_" * 40)
 
                 num_of_links += 1
@@ -129,7 +105,7 @@ def grab_episode_list_links(month_link: str):
     for article in episode_list.find_all("h2", {"class": "program-show__title"}):
         time_num =random.randint(10, 30)
         time.sleep(time_num)
-        print(f"Slept{time_num}")
+        print(f"Slept {time_num}")
         if check_url(article.find('a').get('href')):
             try:
                 grab_daylinks(article.find('a').get('href'))
@@ -162,7 +138,7 @@ def get_scroll_links(scroll_link):
     without interruption.
     """
     main_link = "https://www.npr.org/"
-    while("2009" not in scroll_link):
+    while("=2008-" not in scroll_link):
         time_num = random.randint(10, 30)
         time.sleep(time_num)
         month_soup = grab_episode_list_links(scroll_link) # <-- creates task
@@ -172,7 +148,7 @@ def get_scroll_links(scroll_link):
 def main():
     "Under <main>, <section id = main-section>"
     # grab_episode_list_links("https://www.npr.org/programs/all-things-considered/archive?date=2022-12-27&eid=1145553073")
-    scroll_link = new_scroll_link(soup)
+    scroll_link = "/programs/fresh-air/archive?date=2012-12-20&eid=167700597"
     get_scroll_links("https://www.npr.org/" + scroll_link)
     conn.close()
 

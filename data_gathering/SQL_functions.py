@@ -3,14 +3,14 @@ Utilizes partial functions
 """
 
 def export_QuantNeg(cursor, Unique_ID:int, Quant: str, Match:str,
-                         Context:str, Title:str, Clauses:int, Link:str, Standalone:int, Utterance:str):
+                         Context:str, Title:str, Clauses:int, Link:str, Standalone:int, Utterance:str, show:str):
 
-    cursor.execute('''INSERT INTO qn_sentences VALUES(?,?,?,?,?,?,?,?,?,?)''', (Unique_ID,
-                         Quant, Match, Context, Title, Clauses, Link, Standalone, Utterance,"No"))
+    cursor.execute('''INSERT INTO qn_sentences VALUES(?,?,?,?,?,?,?,?,?,?,?)''', (Unique_ID,
+                         Quant, Match, Context, Title, Clauses, Link, Standalone, Utterance,"No", show))
 
 
 def export_Link(cursor, Link:str, Audio_dir:str, Clauses:int, Transcript:str, Batch:int, html:str, show_title: str):
-    cursor.execute('''INSERT INTO links VALUES(?,?,?,?,?, ?)''',
+    cursor.execute('''INSERT INTO links VALUES(?,?,?,?,?,?,?)''',
                    (Link,
                     Audio_dir,
                     Clauses,
@@ -43,7 +43,7 @@ def QN_last_ID(cursor) -> int:
     ID = cursor.fetchone()
     return 440 if ID is None else ID[0]
 
-def select_batch(cursor, conn) -> iter:
-    data_iter = cursor.execute('''SELECT * FROM links;''')
+def select_batch(cursor, conn, show:str) -> iter:
+    data_iter = cursor.execute(f"SELECT * FROM links WHERE show like '%{show}%';")
     conn.commit()
     return data_iter

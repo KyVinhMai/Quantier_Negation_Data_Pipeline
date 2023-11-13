@@ -1,7 +1,7 @@
-import dependency_patterns as dp
-from not_because_dependency_patterns import not_because_match_patterns, not_because_forbidden_patterns
+import quant_neg_detection.dependency_patterns as dp
+from quant_neg_detection.not_because_dependency_patterns import not_because_match_patterns, not_because_forbidden_patterns
 import en_core_web_trf
-import Quantifier_Phrase_Segmentation as qps
+import quant_neg_detection.Quantifier_Phrase_Segmentation as qps
 import spacy
 from spacy.tokens.doc import Doc
 from spacy.matcher import DependencyMatcher
@@ -99,8 +99,7 @@ def find_quantifier_negation(sentences: list[str], quantifiers) -> tuple[list, l
             sents.append(candidate)
             indices.append(i)
 
-            i = i+1
-            print(">>>>>> ", candidate, "<<<<<<<")
+        i = i+1
 
     print("\n", "="*60)
     print('INFO: Search completed with ' + str(len(sents)) + ' potential quantifier + negations.')

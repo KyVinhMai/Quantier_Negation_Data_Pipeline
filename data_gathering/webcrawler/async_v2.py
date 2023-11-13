@@ -3,6 +3,7 @@ import logging
 import asyncio
 import requests
 from aiohttp import ClientSession
+from data_gathering.other_utils import *
 import sqlite3
 import spacy
 import os.path
@@ -16,7 +17,7 @@ import random
 nlp = en_core_web_sm.load()
 
 "SQL Database"
-conn = sqlite3.connect(r'D:\AmbiLab_data\quant_neg_data.db')
+conn = sqlite3.connect(r'E:\AmbiLab_data\copied_Db\quant_neg_data.db')
 cursor = conn.cursor()
 
 "User Agent"
@@ -36,7 +37,7 @@ async def audio_to_dir(session, title:str, soup: BeautifulSoup) -> str:
     """
     audio_link = npr.grab_audio_link(soup)
     response = await session.get(audio_link, headers=agent)
-    save_path = 'D:\AmbiLab_data\Audio\\'
+    save_path = 'E:\AmbiLab_data\Audio\\'
     name_of_file = "_".join(title.split(" "))
     completeName = os.path.join(save_path, name_of_file + ".mp3")
 
@@ -50,14 +51,17 @@ async def gather_episodes(session: ClientSession, day_link: BeautifulSoup) -> li
     tasks = []
     for episode_transcript in day_link.find_all("h3", {"class": "rundown-segment__title"}):
         link = episode_transcript.find('a').get('href')
-        try:
-            response = await session.get(link, headers=agent)
-            html = await response.text()
-            article_soup = BeautifulSoup(html, "html.parser")
-            tasks.append((link, article_soup))
-            print("~", link)
-        except Exception as e:
-            logging.exception(f"Error in collecting episode link: {link} ")
+
+        if check_url(link): #Checks to make sure we don't enter a cursed website
+
+            try:
+                response = await session.get(link, headers=agent)
+                html = await response.text()
+                article_soup = BeautifulSoup(html, "html.parser")
+                tasks.append((link, article_soup))
+                print("~", link)
+            except Exception as e:
+                logging.exception(f"Error in collecting episode link: {link} ")
 
     return tasks
 
@@ -70,6 +74,7 @@ async def grab_day_catalogue_links(session: ClientSession, day_catalogue: str):
     soups = await gather_episodes(session, day)
 
     for link, article_soup in soups: #todo turn into iterator
+
         try:
             transcript = nlp("".join(npr.extract_transcript(article_soup)))
             title = npr.extract_metadata(article_soup)
@@ -107,19 +112,24 @@ async def collect_section_list_links(month_link: str, session: ClientSession) ->
                 time.sleep(random.randint(0,20))
                 day_links = article.find('a').get('href')
                 tasks.append(asyncio.create_task(grab_day_catalogue_links(session, day_links)))
+
             except requests.exceptions.ConnectionError as e:
                 logging.error(f"Connection refused by the server")
                 continue
 
         return tasks
 
-    response = await session.get(month_link, headers=agent)
-    html = await response.text()
-    month_soup = BeautifulSoup(html, "html.parser")
-    episode_list = month_soup.find(id="episode-list")
+    try:
+        response = await session.get(month_link, headers=agent)
+        html = await response.text()
+        month_soup = BeautifulSoup(html, "html.parser")
+        episode_list = month_soup.find(id="episode-list")
 
-    tasks = collect_tasks(session, episode_list)
-    await asyncio.gather(*tasks)
+        tasks = collect_tasks(session, episode_list)
+        await asyncio.gather(*tasks)
+
+    except asyncio.TimeoutError:
+        logging.error( f"timeout error on {month_link}")
 
     return month_soup
 
@@ -134,7 +144,7 @@ async def get_scroll_links(scroll_link):
         sequentially grab the scroll link which allows us to progress to the next
         section of links.
 
-        Hence the main goal of the while loop is to continously grab the next
+        Hence, the main goal of the while loop is to continously grab the next
         scroll link, but the subgoal is processing that year. We use
         asyncio.create_task() to push the processing of the html data to the
         background... so that the loop can continue get the next scroll link
@@ -143,7 +153,7 @@ async def get_scroll_links(scroll_link):
         main_link = "https://www.npr.org/"
         main_tasks = []
         async with ClientSession() as session:
-            while ("2021" not in scroll_link):
+            # while ("2021" not in scroll_link):
 
                 main_tasks.append(asyncio.create_task(collect_section_list_links(scroll_link, session)))
 
@@ -158,6 +168,7 @@ async def get_scroll_links(scroll_link):
 
 def main():
     start = time.time()
+    #asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
     scroll_link = "/programs/fresh-air/archive?date=2023-09-26&eid=12017780103" #Replaced with Fresh Air
     asyncio.run(get_scroll_links("https://www.npr.org/" + scroll_link))

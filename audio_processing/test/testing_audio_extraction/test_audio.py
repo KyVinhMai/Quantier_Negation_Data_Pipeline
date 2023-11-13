@@ -12,8 +12,8 @@ from audio_processing.utils import io_functions as io, minimum_word_distance as 
 from audio_processing.utils import audio_preprocessing_functions as pf, localization_functions as lf
 from audio_processing import force_aligner as fa
 
-# from utils import io_functions as io, minimum_word_distance as md
-# from utils import preprocessing_functions as pf, localization_functions as lf
+# from other_utils import io_functions as io, minimum_word_distance as md
+# from other_utils import preprocessing_functions as pf, localization_functions as lf
 # import force_aligner as fa
 
 

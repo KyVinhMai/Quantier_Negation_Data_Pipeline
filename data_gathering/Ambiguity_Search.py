@@ -21,9 +21,9 @@ logging.basicConfig(
     filemode="w"
 )
 
-quantifiers = ['each'] #todo clean this up
+quantifiers = ['every']
 
-def validate_quant_neg(r: Type[link_item], extract_meta_data: Callable, ID: int, num: int):
+def validate_quant_neg(r: Type[link_item], extract_meta_data: Callable, ID: int, num: int, show_type):
     """
     article_url: actual url to website
     extract_transcript: function
@@ -44,7 +44,7 @@ def validate_quant_neg(r: Type[link_item], extract_meta_data: Callable, ID: int,
 
             try:
                 for i in range(len(quants)):
-                    export_QN(ID, quants[i], "NONE", context, title, r.clauses, r.link, "NONE", matches[i])
+                    export_QN(ID, quants[i], "NONE", context, title, r.clauses, r.link, "NONE", matches[i], show_type) #todo fix
                     conn.commit()
 
                     ID += 1
@@ -64,18 +64,18 @@ def validate_quant_neg(r: Type[link_item], extract_meta_data: Callable, ID: int,
 
     return ID
 
-def main():
-    data_iter = iter([row for row in sql.select_batch(cursor, conn)])
+def main(show_type:str):
+    data_iter = iter([row for row in sql.select_batch(cursor, conn, show_type)])
     ID = sql.QN_last_ID(cursor)
 
     articles = 0
     for link in data_iter:
         row = link_init(link)
-        ID = validate_quant_neg(row, npr.extract_metadata, ID, articles)
+        ID = validate_quant_neg(row, npr.extract_metadata, ID, articles, show_type)
         articles += 1
 
     print(f"Read {articles} articles!")
     print("Quantifier-Negation Extraction Complete!")
 
 if __name__ == "__main__":
-    main()
+    main("Fresh Air")
