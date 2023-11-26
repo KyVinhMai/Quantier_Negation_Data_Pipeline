@@ -1,5 +1,6 @@
 import whisper
-import torch, torchaudio
+import torch
+import torchaudio
 import sys
 from pathlib import Path
 from dataclasses import dataclass

@@ -1,4 +1,4 @@
-import ast
+import json
 import re
 import spacy
 from spacy.tokens.doc import Doc
@@ -13,7 +13,7 @@ def load_jsondoc(json_transcript: str) -> list[str]:
     :param json_transcript:  str doc json object
     :return: sentences
     """
-    doc_file = Doc(nlp.vocab).from_json(ast.literal_eval(json_transcript))
+    doc_file = Doc(nlp.vocab).from_json(json.loads(json_transcript))
     sentences = [rm_nonlexical_items(sent.text) for sent in doc_file.sents]
     sentences = [sent for sent in sentences if sent]
 

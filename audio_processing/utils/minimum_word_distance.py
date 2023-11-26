@@ -13,9 +13,9 @@ def minimum_word_length(segment:[str], sentence_target:[str], first_word:str) ->
 
     Loops through both sentences simultaneously
     """
-    print(segment, first_word)
-    index = segment.index(first_word)
-    assert index is not None, "Word should be found in segment. Index not found"
+
+    word_i = segment.index(first_word)
+    assert word_i is not None, "Word should be found in segment. Index not found"
 
     result = True
     for i in range(len(sentence_target)):
@@ -54,10 +54,16 @@ def whisper_time_stamps(utterance: str, whisper_transcript: dict) -> tuple[float
     'no_speech_prob': 0.06631708890199661
     }
     """
+    scores = []
+    total_score = len(utterance)
+
     first_word = utterance.lower().split()[0]
-    for segment in whisper_transcript["segments"]:
+    for index, segment in enumerate(whisper_transcript["segments"]):
+
         if first_word in segment["text"].lower():
-            if minimum_word_length(split_rm_punct(segment['text']), split_rm_punct(utterance), first_word):
+
+            if minimum_word_length(split_rm_punct(segment['text']), split_rm_punct(utterance), index):
+
                 return segment["start"] * 1000, segment["end"] * 1000
 
 def whisper_context(context_target: list[str], whisper_transcript: dict):
