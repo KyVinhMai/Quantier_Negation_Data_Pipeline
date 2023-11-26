@@ -62,20 +62,26 @@ def get_quantifier(sentence: str, quantifiers: list[str]) -> tuple[Doc, str, str
 
 def dependency_exists(sentence: str, quant_segment: str):
     doc = nlp(sentence)
+    quant_segment = quant_segment.split(" ")
 
     # Hardcoding to weed out sentences with certain phrases
     forbidden_phrases = []
-    if quant_segment.lower().startswith("all"):
+
+    if quant_segment[0].lower().startswith("all"):
         forbidden_phrases.append("y'all")
+
     for word in ["nearly", "almost", "most", "most of"]:
-        forbidden_phrases.append(word + " " + quant_segment)
+        forbidden_phrases.append(word + " " + quant_segment[0])
+
     forbidden_phrase_in_sentence = False
     for phrase in forbidden_phrases:
         if phrase in sentence.lower():
             forbidden_phrase_in_sentence = True
 
-    matches = not forbidden_phrase_in_sentence and dependency_matcher(doc)
-    quant_segment = quant_segment.split(" ")
+    if not forbidden_phrase_in_sentence:
+        matches = dependency_matcher(doc)
+    else:
+        matches = False
 
     if matches:
         for match in matches: # Looks through all case of matches
@@ -83,12 +89,12 @@ def dependency_exists(sentence: str, quant_segment: str):
             noun_subject_index = doc[token_ids[1]]
 
             if debugging:
-                    print("-"*36)
-                    print(token_ids)
-                    print(quant_segment)
-                    for i in range(len(token_ids)):
-                        print(dp.aux_pattern[i]["RIGHT_ID"] + ":", doc[token_ids[i]].text)
-                    print("-" * 36)
+                print("-"*36)
+                print(token_ids)
+                print(quant_segment)
+                for i in range(len(token_ids)):
+                    print(dp.aux_pattern[i]["RIGHT_ID"] + ":", doc[token_ids[i]].text)
+                print("-" * 36)
 
             # if doc[noun_subject_index].text == token.text:
             #     return True
