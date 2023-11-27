@@ -1,7 +1,12 @@
-from audio_processing.utils.audio_preprocessing_functions import split_rm_punct
+from operator import itemgetter
+from utils.text_preprocessing_functions import split_sentence_with_numbers
 
-def minimum_word_length(segment:[str], sentence_target:[str], first_word:str) -> bool:
+def minimum_word_length(segments: list[dict], target: list[str], first_word:str, index: int) -> tuple[float, float, float]:
     """
+    The whisper transcript structure can be a little tricky. Be careful of how you
+    index into the segment and into each segment (In the test files there is an
+    example transcript)
+
     Assumptions:
         > Whisper will have accurate transcription, but the punctuation marks
         are inaccurate
@@ -13,58 +18,67 @@ def minimum_word_length(segment:[str], sentence_target:[str], first_word:str) ->
 
     Loops through both sentences simultaneously
     """
-
-    word_i = segment.index(first_word)
+    debugging = False
+    seg = split_sentence_with_numbers(segments[index]["text"])
+    word_i = seg.index(first_word)
     assert word_i is not None, "Word should be found in segment. Index not found"
 
-    result = True
-    for i in range(len(sentence_target)):
-        # print(f"<{sentence_target[i], segment[index]}>", "\n", "sentence:", segment, sentence_target)
+    i = 0
+    score = 0
+    total_score = len(target)
+    start = segments[index]["words"][word_i]["start"]
+
+    if debugging:
+        print(seg, len(seg))
+        print(segments[index]["words"], len(segments[index]["words"]))
+
+    while i != len(target):
         try:
-            if sentence_target[i] != segment[index]:
-                result = False
-                break
+            if debugging: print(f"{target[i]} | {seg[word_i]} : {target[i] == seg[word_i]}")
+            if target[i] == seg[word_i]:
+                score += 1 / total_score
+
         except IndexError:
-            result = False
-            break
-        index += 1
+            index += 1
+            seg = split_sentence_with_numbers(segments[index]["text"]) #moves window to the next segment
+            word_i = 0 # reset word index
 
-    return result
+            if target[i] == seg[word_i]: # Check the words again since window moved
+                score += 1 / total_score
+
+        finally:
+            i += 1
+            word_i += 1
+
+    end = segments[index]["words"][word_i - 1]["end"]
+
+    return (start, end, score)
 
 
-def whisper_time_stamps(utterance: str, whisper_transcript: dict) -> tuple[float,float]:
+def whisper_time_stamps(utterance: str, whisper_transcript: dict) -> tuple[float, float, float]:
     """
     Finds the sentence segment in the whisper transcript which contains the
     first word, and then matches the rest of the utterance sentence to the
     sentence.
 
-    whisper_transcript["segments"] = list of dictionaries
-    segment["text"] =
-
-    Ex.  {'
-    id': 3,
-    'seek': 0,
-    'start': 20.56,
-    'end': 28.16,
-    'text': " City, the average rent is over $2,000. Vanessa and her mom also face other barriers, like credit's",
-    'tokens': [4392, 11, 264, 4274, 6214, 307, 670, 1848, 17, 11, 1360, 13, 27928, 293, 720, 1225, 611, 1851, 661, 13565, 11, 411, 5397, 311],
-    'temperature': 0.0,
-    'avg_logprob': -0.17815227336711711,
-    'compression_ratio': 1.628099173553719,
-    'no_speech_prob': 0.06631708890199661
-    }
+    the transcript and utterance should already have their punctuation removed.
     """
     scores = []
-    total_score = len(utterance)
 
-    first_word = utterance.lower().split()[0]
+    first_word = split_sentence_with_numbers(utterance.lower())[0]
     for index, segment in enumerate(whisper_transcript["segments"]):
 
-        if first_word in segment["text"].lower():
+        if first_word in segment["text"]:
+            target = split_sentence_with_numbers(utterance)
+            score = minimum_word_length(whisper_transcript["segments"], target, first_word, index)
 
-            if minimum_word_length(split_rm_punct(segment['text']), split_rm_punct(utterance), index):
+            if score[-1] == 1:
+                return score[0] * 1000, score[1] * 1000, score[-1]
 
-                return segment["start"] * 1000, segment["end"] * 1000
+            scores.append(score)
+
+    result = max(scores, key=itemgetter(1))
+    return result[0] * 1000, result[1] * 1000, result[-1]
 
 def whisper_context(context_target: list[str], whisper_transcript: dict):
     """
@@ -89,18 +103,51 @@ def whisper_context(context_target: list[str], whisper_transcript: dict):
     while start_ts is None:
         segment = next(whisper_iter)
         if first_word in segment["text"].lower():
-            if minimum_word_length(split_rm_punct(segment['text']), split_rm_punct(first_sent), first_word):
+            if minimum_word_length(rm_punct(segment['text']), rm_punct(first_sent), first_word):
                 start_ts = segment["start"] * 1000
 
     while end_ts is None:
         segment = next(whisper_iter)
         if last_word in segment["text"].lower():
-            if minimum_word_length(split_rm_punct(segment['text']), split_rm_punct(last_sent), first_word):
+            if minimum_word_length(rm_punct(segment['text']), rm_punct(last_sent), first_word):
                 end_ts = segment["start"] * 1000
 
     return start_ts, end_ts
 
+if __name__ == "__main__":
+
+    def calculate_similarity_score(sentence1, sentence2):
+        words1 = sentence1.split()
+        words2 = sentence2.split()
+
+        distance_matrix = [[0] * (len(words2) + 1) for _ in range(len(words1) + 1)]
+
+        for i in range(len(words1) + 1):
+            for j in range(len(words2) + 1):
+                if i == 0:
+                    distance_matrix[i][j] = j
+                elif j == 0:
+                    distance_matrix[i][j] = i
+                elif words1[i - 1] == words2[j - 1]:
+                    distance_matrix[i][j] = distance_matrix[i - 1][j - 1]
+                else:
+                    distance_matrix[i][j] = 1 + min(
+                        distance_matrix[i - 1][j],  # Deletion
+                        distance_matrix[i][j - 1],  # Insertion
+                        distance_matrix[i - 1][j - 1]  # Substitution
+                    )
+
+        levenshtein_distance = distance_matrix[len(words1)][len(words2)]
+        similarity_score = 1 - (levenshtein_distance / len(words2))
+
+        return similarity_score
 
 
+    # Example usage:
+    target_sentence = "congress approved nearly 50 billion to help renters pay back rent"
+    potential_sentence = "congress approved nearly billion to help renters pay back rent"
+
+    score = calculate_similarity_score(potential_sentence, target_sentence)
+    print(f"The similarity score is: {score}")
 
 

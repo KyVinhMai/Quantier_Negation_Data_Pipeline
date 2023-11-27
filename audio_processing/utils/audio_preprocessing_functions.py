@@ -2,6 +2,7 @@ from pydub import AudioSegment
 from mutagen.mp3 import MP3
 import math
 import re
+import string
 import en_core_web_sm
 nlp = en_core_web_sm.load(disable = ['ner', 'lemmatizer'])
 # Removing pipeline components allows spacy to run faster
@@ -54,11 +55,4 @@ def insert_vertical(utterance: str = None, context: str = None, quant: str = Non
         context_list = re.sub(r'[!|?|.|,|[|]', '', context).split(" ")  # Removes punctuation
         transcript = "|".join([word.upper() for word in context_list])
         return transcript
-
-def split_rm_punct(sentence) -> list[str]:
-    "Remove comma and periods. Also lowers the str"
-    sentence = sentence.replace(",", "").replace(".", "")
-    sentence = sentence.lower()
-    return sentence.split()
-
 
