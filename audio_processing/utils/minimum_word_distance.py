@@ -18,27 +18,35 @@ def minimum_word_length(segments: list[dict], target: list[str], first_word:str,
 
     Loops through both sentences simultaneously
     """
-    debugging = False
+    debugging = True
     seg = split_sentence_with_numbers(segments[index]["text"])
     word_i = seg.index(first_word)
-    assert word_i is not None, "Word should be found in segment. Index not found"
 
     i = 0
     score = 0
     total_score = len(target)
+    terminate_loop = False
+
     start = segments[index]["words"][word_i]["start"]
 
     if debugging:
         print(seg, len(seg))
         print(segments[index]["words"], len(segments[index]["words"]))
 
-    while i != len(target):
+    while i != len(target) and not terminate_loop:
         try:
-            if debugging: print(f"{target[i]} | {seg[word_i]} : {target[i] == seg[word_i]}")
+            if debugging: print(f"{i, target[i]} | {word_i, seg[word_i]} : {target[i] == seg[word_i]}")
             if target[i] == seg[word_i]:
                 score += 1 / total_score
 
+            i += 1
+            word_i += 1
+
         except IndexError:
+            if index + 1 == len(segments): # If window reaches the end of the transcript: break
+                terminate_loop = True
+                break
+
             index += 1
             seg = split_sentence_with_numbers(segments[index]["text"]) #moves window to the next segment
             word_i = 0 # reset word index
@@ -46,13 +54,14 @@ def minimum_word_length(segments: list[dict], target: list[str], first_word:str,
             if target[i] == seg[word_i]: # Check the words again since window moved
                 score += 1 / total_score
 
-        finally:
-            i += 1
-            word_i += 1
+    print(index)
+    print(len(segments))
 
+    print(word_i)
+    print(len(segments[index]["words"]))
     end = segments[index]["words"][word_i - 1]["end"]
 
-    return (start, end, score)
+    return start, end, score
 
 
 def whisper_time_stamps(utterance: str, whisper_transcript: dict) -> tuple[float, float, float]:
@@ -63,56 +72,24 @@ def whisper_time_stamps(utterance: str, whisper_transcript: dict) -> tuple[float
 
     the transcript and utterance should already have their punctuation removed.
     """
+
+    print("> Getting time stamps from whisper")
     scores = []
 
     first_word = split_sentence_with_numbers(utterance.lower())[0]
     for index, segment in enumerate(whisper_transcript["segments"]):
 
-        if first_word in segment["text"]:
+        if first_word in split_sentence_with_numbers(segment["text"]): #Apparently "and" in a string counts as True?
             target = split_sentence_with_numbers(utterance)
             score = minimum_word_length(whisper_transcript["segments"], target, first_word, index)
 
-            if score[-1] == 1:
+            if score[-1] >= 1:
                 return score[0] * 1000, score[1] * 1000, score[-1]
 
             scores.append(score)
 
-    result = max(scores, key=itemgetter(1))
+    result = max(scores, key=itemgetter(2))
     return result[0] * 1000, result[1] * 1000, result[-1]
-
-def whisper_context(context_target: list[str], whisper_transcript: dict):
-    """
-    Uses only the first sentence and last sentence of the target context.
-    1 . Finds the inital time marker for the first sentence
-    2. Finds the last time marker for the last sentence
-
-    Returns those time markers together, assuming everything in between is
-    within the context
-    """
-    first_sent = context_target[0].lower()
-    first_word = first_sent.lower().split()[0]
-
-    last_sent = context_target[-1].lower()
-    last_word = last_sent[-1].lower()
-
-    start_ts = None
-    end_ts = None
-
-    whisper_iter = iter(whisper_transcript["segments"])
-
-    while start_ts is None:
-        segment = next(whisper_iter)
-        if first_word in segment["text"].lower():
-            if minimum_word_length(rm_punct(segment['text']), rm_punct(first_sent), first_word):
-                start_ts = segment["start"] * 1000
-
-    while end_ts is None:
-        segment = next(whisper_iter)
-        if last_word in segment["text"].lower():
-            if minimum_word_length(rm_punct(segment['text']), rm_punct(last_sent), first_word):
-                end_ts = segment["start"] * 1000
-
-    return start_ts, end_ts
 
 if __name__ == "__main__":
 

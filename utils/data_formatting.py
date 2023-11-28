@@ -31,6 +31,7 @@ def audio_data_init(row : tuple) -> dataclass:
         row[2],
         row[3],
         row[4],
+        row[4],
         row[5],
         row[6],
     )
@@ -40,7 +41,8 @@ class audio_data:
     audio_dir: str
     sentences: list[str] | str
     utterance: str
-    context: list[str] | str
+    context_list: list[str] | str
+    context_str: str
     show: str
     quant: str
     folder: str = f"E:\\AmbiLab_data\\Audio\\processed_audio\\{show}\\{quant}"

@@ -35,7 +35,7 @@ def splice_audio(audio_dir:str, audio_len: float, loc: tuple[float,float]): #-> 
 
     return trimmed_audio
 
-def insert_vertical(utterance: str = None, context: str = None, quant: str = None) -> tuple[str, int] or str:
+def insert_vertical(utterance: str = None, quant: str = None) -> tuple[str, int] or str:
     """
     The wav2vec model requires transcripts to be uppercase and have
     vertical lines between each word.
@@ -51,8 +51,8 @@ def insert_vertical(utterance: str = None, context: str = None, quant: str = Non
 
         return transcript, index
 
-    else:
-        context_list = re.sub(r'[!|?|.|,|[|]', '', context).split(" ")  # Removes punctuation
-        transcript = "|".join([word.upper() for word in context_list])
-        return transcript
+    # else:
+    #     context_list = re.sub(r'[!|?|.|,|[|]', '', context).split(" ")  # Removes punctuation
+    #     transcript = "|".join([word.upper() for word in context_list])
+    #     return transcript
 

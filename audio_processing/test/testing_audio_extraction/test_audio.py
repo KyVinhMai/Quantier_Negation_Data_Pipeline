@@ -97,7 +97,7 @@ def extract_match_audio(
         quantifier: str) -> str:
 
     "Trim audio down to a sentence"
-    start, end = md.whisper_time_stamps(target_utt, whisper_transcript)  # Get time stamps
+    start, end, _ = md.whisper_time_stamps(target_utt, whisper_transcript)  # Get time stamps
     trimmed_audio = lf.extract_sentence(start, end, audio_fragment)
     trimmed_audio_name, trimmed_path = io.write_audio(trimmed_audio, audio_fragment, "trimmed")
 
