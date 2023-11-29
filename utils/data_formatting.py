@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from utils.text_preprocessing_functions import load_jsondoc, rm_nonlexical_items
-
+from utils.text_preprocessing_functions import load_json, load
+from audio_processing.audio_utils.audio_preprocessing_functions import return_audio_len
+import os
 def link_init(link_row : tuple) -> dataclass:
     return link_item(
         link_row[0],
@@ -22,7 +23,8 @@ class link_item:
 
     def __post_init__(self):
         if isinstance(self.sentences, str):
-            self.sentences = load_jsondoc(self.sentences)
+            self.sentences = load_json(self.sentences)
+
 
 def audio_data_init(row : tuple) -> dataclass:
     return audio_data(
@@ -45,24 +47,33 @@ class audio_data:
     context_str: str
     show: str
     quant: str
-    folder: str = f"E:\\AmbiLab_data\\Audio\\processed_audio\\{show}\\{quant}"
 
     def __post_init__(self):
+        if "every" in self.quant.lower():
+            self.quant = "every"
+
+        elif "all" in self.quant.lower():
+            self.quant = "all"
+
+        elif "each" in self.quant.lower():
+            self.quant = "each"
+
+        self.show = "_".join(self.show.split())
+        self.folder = f"E:\\AmbiLab_data\\Audio\\processed_audio\\{self.show}\\{self.quant}\\{self.ID}"
+
+        try:
+            os.mkdir(self.folder)
+        except OSError as error:
+            print(error)
+
+        self.audio_dir = self.audio_dir.replace('D', 'E', 1)
+        self.audio_len = return_audio_len(self.audio_dir)
+
         if isinstance(self.sentences, str):
-            self.sentences = load_jsondoc(self.sentences)
+            self.sentences = load_json(self.sentences)
 
-        if isinstance(self.context, str):
-            self.context = [rm_nonlexical_items(sent) for sent in self.context]
-
-        if len(self.quant) != 1: #Assumes that if quant is len of 1, then it should have the quantifier information
-            if "every" in self.quant:
-                self.quant = "every"
-
-            elif "all" in self.quant:
-                self.quant = "all"
-
-            elif "each" in self.quant:
-                self.quant = "each"
+        if isinstance(self.context_list, str):
+            self.context_list = load(self.context_list)
 
 
 

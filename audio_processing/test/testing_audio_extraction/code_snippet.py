@@ -3,7 +3,7 @@ def locate_and_splice(
         context_target: list[str],
         json_transcript: str): #-> tuple[dict, str]:
 
-    sentences = pf.load_jsondoc(json_transcript)
+    sentences = pf.load_json(json_transcript)
     target_con = [pf.rm_nonlexical_items(sent) for sent in context_target]
     audio_len = pf.return_audio_len(audio_directory) # Duration in seconds
     new_audio_name = audio_directory

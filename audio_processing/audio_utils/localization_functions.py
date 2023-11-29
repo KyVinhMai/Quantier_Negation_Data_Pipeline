@@ -7,15 +7,15 @@ logging.basicConfig(
     filemode= "w"
 )
 
-def extract_sentence(start:float, end:float, audio_name: str) -> AudioSegment:
+def extract_sentence(start:float, end:float, audio_dir: str) -> AudioSegment:
     "Segments the audio given the timestamps"
-    audio_file = AudioSegment.from_wav(audio_name)
+    audio_file = AudioSegment.from_wav(audio_dir)
     return audio_file[start:end] if end else audio_file[start:]
 
-def fa_return_timestamps(waveform, trellis, word_segments, i: int) -> tuple[float, float]:
+def fa_return_timestamps(waveform, trellis, word_segments) -> tuple[float, float]:
     sample_rate = 44100
     ratio = waveform.size(1) / (trellis.size(0) - 1)
-    word = word_segments[i]
+    word = word_segments[0]
     x0 = int(ratio * word.start)
     x1 = int(ratio * word.end)
 
@@ -41,7 +41,7 @@ def localize_context(sentences: list[str], context_target: list[str]) -> tuple[f
         end_index = sentences.index(context_target[-1])
     except ValueError:
 
-        print("> Could not index in! Finding through looping")
+        print("@ Could not index in! Finding through looping")
         index = 0
 
         while initial_index is None:

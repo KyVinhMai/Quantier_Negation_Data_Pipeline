@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 import en_core_web_sm
 nlp = en_core_web_sm.load()
-from audio_processing.utils import audio_preprocessing_functions as pf, \
+from audio_processing.audio_utils import audio_preprocessing_functions as pf, \
     localization_functions as lf
 import sqlite3
 

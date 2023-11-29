@@ -1,7 +1,7 @@
 import json
 import string
 import timeit
-from audio_processing.utils.minimum_word_distance import whisper_time_stamps
+from audio_processing.audio_utils.minimum_word_distance import whisper_time_stamps
 from utils.text_preprocessing_functions import sanitize_whisper_transcript, split_sentence_with_numbers
 
 """
