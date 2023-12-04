@@ -18,7 +18,7 @@ def minimum_word_length(segments: list[dict], target: list[str], first_word:str,
 
     Loops through both sentences simultaneously
     """
-    debugging = True
+    debugging = False
     seg = split_sentence_with_numbers(segments[index]["text"])
     word_i = seg.index(first_word)
 
@@ -28,10 +28,6 @@ def minimum_word_length(segments: list[dict], target: list[str], first_word:str,
     terminate_loop = False
 
     start = segments[index]["words"][word_i]["start"]
-
-    if debugging:
-        print(seg, len(seg))
-        print(segments[index]["words"], len(segments[index]["words"]))
 
     while i != len(target) and not terminate_loop:
         try:
@@ -54,11 +50,6 @@ def minimum_word_length(segments: list[dict], target: list[str], first_word:str,
             if target[i] == seg[word_i]: # Check the words again since window moved
                 score += 1 / total_score
 
-    print(index)
-    print(len(segments))
-
-    print(word_i)
-    print(len(segments[index]["words"]))
     end = segments[index]["words"][word_i - 1]["end"]
 
     return start, end, score
@@ -88,7 +79,14 @@ def whisper_time_stamps(utterance: str, whisper_transcript: dict) -> tuple[float
 
             scores.append(score)
 
-    result = max(scores, key=itemgetter(2))
+    try:
+        result = max(scores, key=itemgetter(2))
+    except ValueError:
+        print("ERROR: No Alignments to be found! Trying again")
+        new_utterance = " ".join(utterance.split()[1:])
+        start, end, score = whisper_time_stamps(new_utterance, whisper_transcript)
+        return start - 400, end + 300, score
+
     return result[0] * 1000, result[1] * 1000, result[-1]
 
 if __name__ == "__main__":

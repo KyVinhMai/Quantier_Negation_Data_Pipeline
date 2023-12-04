@@ -20,20 +20,22 @@ cursor = connection.cursor()
 # )
 # ''')
 
-df = pd.read_csv("EXPORT_atc_every_neg_TRUEHITS.csv")
+df = pd.read_csv("new_ATC_everyneg_handannotated.csv")
 
 for index, line in df.iterrows():
     print(line)
-    cursor.execute('''INSERT INTO hand_annotated VALUES(?,?,?,?,?,?,?,?,?,?)''',
+    cursor.execute('''INSERT INTO hand_annotated VALUES(?,?,?,?,?,?,?,?,?,?,?, ?)''',
                    (line[0], #ID
                     line[1], #quant,
-                    line[11], #match,
+                    line[2], #match,
                     line[3], #context,
                     line[4],# title,
                     line[5], # clauses,
                     line[6],# url,
                     line[7], #standalone,
-                    line[9], #processed,
+                    line[8], #processed,
                     None, #precedingmodifer,
+                    "All Things Considered",
+                    "no"
                     ))
     connection.commit()

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from utils.text_preprocessing_functions import load_json, load
+from utils.text_preprocessing_functions import load_json, load, rm_punct
 from audio_processing.audio_utils.audio_preprocessing_functions import return_audio_len
 import os
 def link_init(link_row : tuple) -> dataclass:
@@ -75,5 +75,4 @@ class audio_data:
         if isinstance(self.context_list, str):
             self.context_list = load(self.context_list)
 
-
-
+        self.context_str = rm_punct(self.context_str)

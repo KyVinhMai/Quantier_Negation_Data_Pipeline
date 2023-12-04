@@ -3,16 +3,18 @@ import whisper_timestamped as whisper
 import torch
 import torchaudio
 import os
-import time
+import string
+import logging
 from audio_processing.audio_utils import io_functions as io
 from audio_processing.audio_utils import minimum_word_distance as md
 from audio_processing.audio_utils import localization_functions as lf
 from audio_processing.audio_utils import audio_preprocessing_functions as pf
 from utils.data_formatting import audio_data_init
 from utils.text_preprocessing_functions import sanitize_whisper_transcript
-devices = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 from force_aligner import force_align
+import shutil
+
+devices = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 Audio_folder_path = "E:\\AmbiLab_data\\Audio"
 
@@ -31,12 +33,16 @@ labels = bundle.get_labels()
 "Whisper Model"
 wh_model = whisper.load_model("medium.en", device=devices)
 
-"Timing Information"
-times = []
+"Logging Configuration"
+logging.basicConfig(
+    level=logging.INFO,
+    filename= "localize_context.log",
+    filemode= "w"
+)
 
 def main():
     table_data = io.query_hand_annotated_data(cursor, conn, "All Things Considered", "every")
-    table_data = [line for line in table_data][:5]# Just get the first 5
+    table_data = [line for line in table_data][159:]
 
     for row in table_data:
         data = audio_data_init(row)
@@ -48,35 +54,56 @@ def main():
 
         "Segment Audio -> Trimmed Audio -> Match Audio"
 
-        # try:
-        whisper_transcript, spliced_audio_dir = locate_and_splice(
-            audio_directory=data.audio_dir,
-            context_target=data.context_list,
-            ID=data.ID,
-            folder=data.folder,
-            sentences=data.sentences,
-            audio_len=data.audio_len
-        )
+        try:
+            whisper_transcript, spliced_audio_dir = locate_and_splice(
+                audio_directory=data.audio_dir,
+                context_target=data.context_list,
+                ID=data.ID,
+                folder=data.folder,
+                sentences=data.sentences,
+                audio_len=data.audio_len
+            )
 
+            try:
+                match_path = extract_match_audio(
+                    ID=data.ID,
+                    folder=data.folder,
+                    target_utt=data.utterance,
+                    whisper_transcript=whisper_transcript,
+                    spliced_audio_dir=spliced_audio_dir
+                )
+            except Exception as e:
+                match_path = None
+                print(f"ERROR: Issues with obtaining match {e}")
 
-        match_path = extract_match_audio(
-            ID=data.ID,
-            folder=data.folder,
-            target_utt=data.utterance,
-            whisper_transcript=whisper_transcript,
-            spliced_audio_dir=spliced_audio_dir
-        )
-            #
-            # context_path = extract_context_audio()
-            #
-            # try:
-            #     io.export_Link(cursor, link, audio_dir, clauses, str(transcript.to_json()), 1, str(article_soup))
-            #     conn.commit()
-            #     print("> Exported:", title)
-            # except sqlite3.Error as er:
-            #     print(er)
-        # except Exception as e:
-        #     print(e)
+            try:
+                context_path = extract_context_audio(
+                    ID=data.ID,
+                    folder=data.folder,
+                    context_target=data.context_str,
+                    whisper_transcript=whisper_transcript,
+                    spliced_audio_dir=spliced_audio_dir
+                )
+            except Exception as e:
+                context_path = None
+                print(f"ERROR: Issues with obtaining context {e} ***")
+
+            if match_path and context_path:
+                try:
+                    io.export_to_audio(cursor, data.ID, data.audio_len, match_path, context_path, data.audio_dir)
+                    conn.commit()
+                    io.update_if_processed(cursor, data.ID)
+                    print("> Exported:", data.ID)
+                except sqlite3.Error as er:
+                    print(f"ERROR: Export error {er} ***")
+
+        except Exception as e:
+            print(f"ERROR: COULDN'T GRAB AUDIO")
+
+        "Copy entire audio to folder"
+        shutil.copy(data.audio_dir, data.folder)
+        with open(f"{data.folder}\\{data.ID}_transcript.txt", "w", encoding="utf-8") as f:
+            f.write(data.context_str)
 
 
 def cleanup(folder, ID):
@@ -120,11 +147,14 @@ def extract_match_audio(ID: int,
 
     "Trim audio down to sentence"
     transcript = sanitize_whisper_transcript(whisper_transcript)
-    target_utt = target_utt.translate
+    target_utt = target_utt.translate(str.maketrans('', '', string.punctuation))
 
     start, end, _ = md.whisper_time_stamps(target_utt, transcript)  # Get time stamps
+
+    end += 300  #TODO change this hardcoding
+
     trimmed_audio = lf.extract_sentence(start, end, spliced_audio_dir)
-    _, trimmed_path = io.write_audio(trimmed_audio, ID, folder, "trimmed")
+    _, trimmed_path = io.write_audio(trimmed_audio, ID, folder, "match_trimmed")
 
     "Find exact match audio match"
     fa_transcript = pf.insert_vertical(target_utt)
@@ -133,31 +163,29 @@ def extract_match_audio(ID: int,
     match_audio = lf.extract_sentence(quant_ts, end, trimmed_path)
     _, match_path = io.write_audio(match_audio,  ID, folder, "match")
 
-    # cleanup(folder, ID)
 
     print("<< Extracted Match File! >>")
 
     return match_path
 
-def extract_context_audio(
-        context_str: str,
-        whisper_transcript: dict,
-        spliced_audio_name:str,
+def extract_context_audio(ID: int,
+                        folder: str,
+                        context_target: str,
+                        whisper_transcript,
+                        spliced_audio_dir:str
 ):
-    start, end, _ = md.whisper_time_stamps(context_target, whisper_transcript)
-    trimmed_audio = lf.extract_sentence(start, end, spliced_audio_name)
-    trimmed_audio_name, trimmed_path = io.write_audio(trimmed_audio, ID, folder, "trimmed")
 
-    "Find exact match audio match"
-    fa_transcript, index = pf.insert_vertical(context_target)
-    word_segments, waveform, trellis = force_align(fa_model, device, labels, trimmed_path, fa_transcript)
-    quant_ts, _ = lf.fa_return_timestamps(waveform, trellis, word_segments)
-    match_audio = lf.extract_sentence(quant_ts, end, trimmed_audio_name)
-    _, match_path = io.write_audio(match_audio, ID, folder, "match")
+    start, end, _ = md.whisper_time_stamps(context_target, whisper_transcript)
+
+    start -= 500
+    end += 500
+
+    trimmed_audio = lf.extract_sentence(start, end, spliced_audio_dir)
+    trimmed_audio_name, trimmed_path = io.write_audio(trimmed_audio, ID, folder, "full")
 
     print("<< Extracted Context File! >>")
 
-    return context_path
+    return trimmed_path
 
 if __name__ == '__main__':
     dict = {

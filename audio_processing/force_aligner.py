@@ -144,8 +144,7 @@ def force_align(fa_model, device, labels, SPEECH_FILE: str, transcript: str) \
 
     word_segments = merge_words(segments)
 
-    print("Found Word Segments")
-    print("=" * 36)
+    print("> Found Word Segments")
 
     return word_segments, waveform, trellis
 

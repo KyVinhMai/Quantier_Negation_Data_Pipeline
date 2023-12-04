@@ -130,7 +130,7 @@ def find_quantifier_negation(sentences: list[str], quantifiers) -> tuple[list, l
 def get_context(sentences, indices) -> str:
     ret = []
     for index in indices:
-        start = index - 2
+        start = index - 3
         end = index + 2
         if start <= 0:
             start = 0
