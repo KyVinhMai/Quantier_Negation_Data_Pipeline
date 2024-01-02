@@ -1,7 +1,4 @@
-from pathlib import Path
 from pydub import AudioSegment
-import shutil
-
 # Read and Write functions
 
 
@@ -38,6 +35,7 @@ def write_audio(audio: AudioSegment, ID:int, folder:str, type:str) -> tuple[str,
 
     title = str(ID) + f"_{type}" + ".wav"
     audio_path = folder + "\\" + title
+    audio = audio.set_channels(1) # Turn into mono
     audio.export(audio_path, format="wav")
     print(f" > Created {audio_path}")
     return title, audio_path

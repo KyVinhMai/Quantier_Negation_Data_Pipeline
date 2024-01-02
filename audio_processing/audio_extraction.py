@@ -41,8 +41,8 @@ logging.basicConfig(
 )
 
 def main():
-    table_data = io.query_hand_annotated_data(cursor, conn, "All Things Considered", "every")
-    table_data = [line for line in table_data][159:]
+    table_data = io.query_hand_annotated_data(cursor, conn, "Fresh Air", "every")
+    table_data = [line for line in table_data]
 
     for row in table_data:
         data = audio_data_init(row)
@@ -103,7 +103,7 @@ def main():
         "Copy entire audio to folder"
         shutil.copy(data.audio_dir, data.folder)
         with open(f"{data.folder}\\{data.ID}_transcript.txt", "w", encoding="utf-8") as f:
-            f.write(data.context_str)
+            f.write(data.sentences)
 
 
 def cleanup(folder, ID):

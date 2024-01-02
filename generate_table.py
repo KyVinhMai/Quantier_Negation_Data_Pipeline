@@ -20,7 +20,7 @@ cursor = connection.cursor()
 # )
 # ''')
 
-df = pd.read_csv("new_ATC_everyneg_handannotated.csv")
+df = pd.read_csv("new_Fresh_Air_everyneg_handannotated.csv")
 
 for index, line in df.iterrows():
     print(line)
@@ -35,7 +35,7 @@ for index, line in df.iterrows():
                     line[7], #standalone,
                     line[8], #processed,
                     None, #precedingmodifer,
-                    "All Things Considered",
+                    "Fresh Air",
                     "no"
                     ))
     connection.commit()

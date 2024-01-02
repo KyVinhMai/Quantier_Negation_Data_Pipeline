@@ -66,7 +66,8 @@ class audio_data:
         except OSError as error:
             print(error)
 
-        self.audio_dir = self.audio_dir.replace('D', 'E', 1)
+        # new_string = self.audio_dir.split()[0]
+        # self.audio_dir = self.audio_dir.split()
         self.audio_len = return_audio_len(self.audio_dir)
 
         if isinstance(self.sentences, str):

@@ -1,5 +1,6 @@
 from pydub import AudioSegment
 import logging
+
 "Logging Configuration"
 logging.basicConfig(
     level=logging.INFO,
@@ -23,7 +24,8 @@ def fa_return_timestamps(waveform, trellis, word_segments) -> tuple[float, float
 
 def localize_context(sentences: list[str], context_target: list[str]) -> tuple[float, float]:
     """
-    Finds the location of utterance by searching through the document.
+    Finds the location of utterance by searching through the document. Attempts
+    syntactic matching before using vector embeddings.
 
     :param sentences: list of sentences split by punctuation
     :param context_target: the sentence we want to match to

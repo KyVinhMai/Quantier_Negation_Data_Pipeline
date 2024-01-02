@@ -7,7 +7,7 @@ from quant_neg_detection.QNI import get_context
 conn = sqlite3.connect(r'E:\AmbiLab_data\quant_neg_data.db')
 cursor = conn.cursor()
 
-df = pd.read_csv("allthingsconsidered_every_neg_handAnnotated.csv")
+df = pd.read_csv("every_neg_Fresh_Air_handAnnotated.csv", encoding='latin-1')
 
 if __name__ == "__main__":
     for row_index, row in df.iterrows():
@@ -29,4 +29,4 @@ if __name__ == "__main__":
                 new_context = get_context(transcript, indices)
                 df.at[row_index, "context"] = new_context
 
-df.to_csv("new_ATC_everyneg_handannotated.csv", index=False)
+df.to_csv("new_Fresh_Air_everyneg_handannotated.csv", index=False)

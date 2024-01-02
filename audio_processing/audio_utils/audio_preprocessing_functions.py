@@ -2,7 +2,6 @@ from pydub import AudioSegment
 from mutagen.mp3 import MP3
 import math
 import re
-import string
 import en_core_web_sm
 nlp = en_core_web_sm.load(disable = ['ner', 'lemmatizer'])
 # Removing pipeline components allows spacy to run faster
