@@ -13,6 +13,7 @@ from utils.data_formatting import audio_data_init
 from utils.text_preprocessing_functions import sanitize_whisper_transcript
 from force_aligner import force_align
 import shutil
+import datetime
 
 devices = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -40,12 +41,12 @@ logging.basicConfig(
     filemode= "w"
 )
 
-def main():
+def main(context_length):
     table_data = io.query_hand_annotated_data(cursor, conn, "Fresh Air", "every")
     table_data = [line for line in table_data]
 
     for row in table_data:
-        data = audio_data_init(row)
+        data = audio_data_init(row, context_length)
 
         print(f"{'='*10} Processing {data.ID} {'='*10}")
         print(f"Utterance: {data.utterance}")
@@ -57,7 +58,9 @@ def main():
         try:
             whisper_transcript, spliced_audio_dir = locate_and_splice(
                 audio_directory=data.audio_dir,
+                match_sentence=data.utterance,
                 context_target=data.context_list,
+                context_length=context_length,
                 ID=data.ID,
                 folder=data.folder,
                 sentences=data.sentences,
@@ -65,7 +68,7 @@ def main():
             )
 
             try:
-                match_path = extract_match_audio(
+                match_path, mstart_ts, mend_ts = extract_match_audio(
                     ID=data.ID,
                     folder=data.folder,
                     target_utt=data.utterance,
@@ -87,6 +90,7 @@ def main():
             except Exception as e:
                 context_path = None
                 print(f"ERROR: Issues with obtaining context {e} ***")
+                logging.error(f"ERROR: Issues with obtaining context {e} ***")
 
             if match_path and context_path:
                 try:
@@ -96,6 +100,7 @@ def main():
                     print("> Exported:", data.ID)
                 except sqlite3.Error as er:
                     print(f"ERROR: Export error {er} ***")
+                    logging.error(f"ERROR: Export error {er} ***")
 
         except Exception as e:
             print(f"ERROR: COULDN'T GRAB AUDIO")
@@ -103,7 +108,17 @@ def main():
         "Copy entire audio to folder"
         shutil.copy(data.audio_dir, data.folder)
         with open(f"{data.folder}\\{data.ID}_transcript.txt", "w", encoding="utf-8") as f:
-            f.write(data.sentences)
+            f.write(data.raw_context)
+
+        try:
+            with open(f"{data.folder}\\{data.ID}_estimated_time_stamps.txt", "w", encoding="utf-8") as f:
+                start_min = str(datetime.timedelta(seconds=mstart_ts))
+                end_min = str(datetime.timedelta(seconds=mend_ts))
+                estimate_string = f"Start Timestamp: {start_min} \nEnd Timestamp: {end_min}"
+                f.write(estimate_string)
+        except:
+            pass
+
 
 
 def cleanup(folder, ID):
@@ -121,14 +136,16 @@ def cleanup(folder, ID):
 
 def locate_and_splice(
         audio_directory: str,
+        match_sentence: str,
         context_target: list[str],
+        context_length: int,
         ID: int,
         folder: str,
         sentences: list[str],
         audio_len: float) -> tuple[dict, str]:
 
     "Splice audio"
-    context_loc = lf.localize_context(sentences, context_target)  # Finds where in the text the sentence could be
+    context_loc = lf.localize_context(sentences, context_target, match_sentence, context_length)  # Finds where in the text the sentence could be
     audio_segment = pf.splice_audio(audio_directory, audio_len, context_loc)  # Splice audio
     _, spliced_audio_dir = io.write_audio(audio_segment, ID, folder, "segment"); print("+ Generating Whisper Transcript +")  # Put into audio directory
 
@@ -143,7 +160,7 @@ def extract_match_audio(ID: int,
                         target_utt: str,
                         whisper_transcript,
                         spliced_audio_dir:str
-                        ) -> str:
+                        ) -> [str, int, int]:
 
     "Trim audio down to sentence"
     transcript = sanitize_whisper_transcript(whisper_transcript)
@@ -151,7 +168,8 @@ def extract_match_audio(ID: int,
 
     start, end, _ = md.whisper_time_stamps(target_utt, transcript)  # Get time stamps
 
-    end += 300  #TODO change this hardcoding
+    start -= 700
+    end += 500  #TODO change this hardcoding
 
     trimmed_audio = lf.extract_sentence(start, end, spliced_audio_dir)
     _, trimmed_path = io.write_audio(trimmed_audio, ID, folder, "match_trimmed")
@@ -166,7 +184,7 @@ def extract_match_audio(ID: int,
 
     print("<< Extracted Match File! >>")
 
-    return match_path
+    return match_path, start/1000, end/1000
 
 def extract_context_audio(ID: int,
                         folder: str,
@@ -177,8 +195,8 @@ def extract_context_audio(ID: int,
 
     start, end, _ = md.whisper_time_stamps(context_target, whisper_transcript)
 
-    start -= 500
-    end += 500
+    start -= 700
+    end += 700
 
     trimmed_audio = lf.extract_sentence(start, end, spliced_audio_dir)
     trimmed_audio_name, trimmed_path = io.write_audio(trimmed_audio, ID, folder, "full")
@@ -188,8 +206,9 @@ def extract_context_audio(ID: int,
     return trimmed_path
 
 if __name__ == '__main__':
+    #Artifact Code: Need to have a check context just in case Noa wants longer context lengths
     dict = {
         0: ("All Things Considered", "every"),
         1: ("All Things Considered", "all")
     }
-    main()
+    main(context_length=3)

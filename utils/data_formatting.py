@@ -26,7 +26,7 @@ class link_item:
             self.sentences = load_json(self.sentences)
 
 
-def audio_data_init(row : tuple) -> dataclass:
+def audio_data_init(row : tuple, context_length: int) -> dataclass:
     return audio_data(
         row[0],
         row[1],
@@ -36,6 +36,7 @@ def audio_data_init(row : tuple) -> dataclass:
         row[4],
         row[5],
         row[6],
+        context_length
     )
 @dataclass
 class audio_data:
@@ -44,9 +45,10 @@ class audio_data:
     sentences: list[str] | str
     utterance: str
     context_list: list[str] | str
-    context_str: str
+    raw_context: str
     show: str
     quant: str
+    context_length: int
 
     def __post_init__(self):
         if "every" in self.quant.lower():
@@ -76,4 +78,9 @@ class audio_data:
         if isinstance(self.context_list, str):
             self.context_list = load(self.context_list)
 
-        self.context_str = rm_punct(self.context_str)
+            #Check the context length
+            if len(self.context_list) != self.context_length + 1:
+                pass
+
+
+        self.context_str = rm_punct(self.raw_context)
