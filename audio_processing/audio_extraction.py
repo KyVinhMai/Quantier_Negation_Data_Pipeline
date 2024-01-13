@@ -42,7 +42,7 @@ logging.basicConfig(
 )
 
 def main(context_length):
-    table_data = io.query_hand_annotated_data(cursor, conn, "Fresh Air", "every")
+    table_data = io.query_hand_annotated_data(cursor, conn, "Fresh Air", "all")
     table_data = [line for line in table_data]
 
     for row in table_data:
