@@ -7,7 +7,7 @@ from quant_neg_detection.QNI import get_context
 conn = sqlite3.connect(r'E:\AmbiLab_data\quant_neg_data.db')
 cursor = conn.cursor()
 
-df = pd.read_csv("all_neg_freshair_handAnnotated.csv", encoding='latin-1')
+df = pd.read_csv("allthingsconsidered_all_neg_handAnnotated.csv", encoding='latin-1')
 
 if __name__ == "__main__":
     for row_index, row in df.iterrows():
@@ -21,12 +21,14 @@ if __name__ == "__main__":
             ''')][0]
         conn.commit()
 
-        transcript = load_json(transcript_data[0])
+        transcript = load_json(transcript_data[0], include_speaker_info=True)
 
         for index, sent in enumerate(transcript):
             if match in sent:
                 indices = [index]
-                new_context = get_context(transcript, indices)
-                df.at[row_index, "context"] = new_context
+                df.at[row_index, "full_transcript"] = get_context(transcript, indices, num_before=3, num_after=2)
+                df.at[row_index, "long_transcript"] = get_context(transcript, indices, num_before=4, num_after=3)
+                df.at[row_index, "xlong_transcript"] = get_context(transcript, indices, num_before=8, num_after=5)
 
-df.to_csv("3context_Allneg_FreshAir_handannotated.csv", index=False)
+
+df.to_csv("3context_Allneg_AllThingsConsidered_handannotated.csv", index=False)
