@@ -7,7 +7,7 @@ import en_core_web_trf
 spacy.prefer_gpu()
 nlp = en_core_web_trf.load(exclude=["lemmatizer"])
 
-def load_json(json_transcript: str) -> list[str]:
+def load_json(json_transcript: str, include_speaker_info=False) -> list[str]:
     """
     Loads json nlp transcript and returns segmented sentences
 
@@ -15,8 +15,11 @@ def load_json(json_transcript: str) -> list[str]:
     :return: sentences
     """
     doc_file = Doc(nlp.vocab).from_json(ast.literal_eval(json_transcript))
-    sentences = [rm_nonlexical_items(sent.text) for sent in doc_file.sents]
-    sentences = [sent for sent in sentences if sent]
+    if include_speaker_info:
+        sentences = [sent.text for sent in doc_file.sents if sent.text]
+    else:
+        sentences = [rm_nonlexical_items(sent.text) for sent in doc_file.sents]
+        sentences = [sent for sent in sentences if sent]
 
     return sentences
 
